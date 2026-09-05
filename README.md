@@ -36,3 +36,33 @@ On ne le versionne généralement pas pour plusieurs raisons :
 - Les dépendances peuvent être facilement réinstallées avec Composer.
   
 - Il est inutile de stocker dans Git du code provenant de bibliothèques externes.
+
+# Étape 2 — Configurer Eloquent
+
+### 1.Quel rôle joue Capsule\Manager ?
+
+`Capsule\Manager` nous permet d'utiliser l'orm eloquent en dehors de laravel. 
+il nous permet:
+  - de configuerer la connexion a la base de donnee
+  - et nous permet d'utiliser de communiquer avec notre base de donner sans ecrire de requette.
+
+--- 
+
+### 2.Pourquoi Eloquent peut-il fonctionner sans Laravel ?
+
+`Eloquent` peut fonctionner sans Laravel parce qu'il est disponible sous forme de composant indépendant.
+
+---
+
+### 3.Où doit se trouver le démarrage de l’ORM ?
+
+Le démarrage de `l'ORM `doit se trouver dans la partie initialisation de l'application, et non dans les classes métier.
+
+---
+
+### 4.Quelle différence existe entre ORM et SQL écrit à la main ?
+
+Avec du `SQL` on écrit directement les requêtes tandis qu'avec un `ORM` on manipule les données à travers des `objets` et des `méthodes` mais en arriere plan `l'orm` se charge de générer et d'exécuter la requête SQL correspondante.
+
+---
+
