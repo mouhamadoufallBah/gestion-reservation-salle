@@ -2,7 +2,8 @@
     "name": "moohamad/gestion-reservation-salle",
     "autoload": {
         "psr-4": {
-            "Moohamad\\GestionReservationSalle\\": "src/"
+            "App\\": "src/",
+            "Test\\": "tests"
         }
     },
     "authors": [
