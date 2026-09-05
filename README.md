@@ -66,3 +66,33 @@ Avec du `SQL` on écrit directement les requêtes tandis qu'avec un `ORM` on man
 
 ---
 
+# Étape 3 — Créer les modèles
+
+### 1.Quel type de relation Eloquent avez-vous utilisé ?
+J'ai utiliser une relation one to many entre salle et reservation autrement dit une salle peut etre dans reservation et un reservation appartient a une salle.
+Ce dernier a ete materialise comme suit:
+
+- Dans le model salle on a une methode `reservations` qui utilise la methode du class model qu'on a herite `hasMany(Reservation::class)` 
+- Dans le model reservation on a une methode `salle` qui utilise methode du class model qu'on a herite `belongTo(Salle::class)`.
+
+---
+
+### 2.Pourquoi déclarer $fillable ou $guarded ?
+
+Cela permet d'indiquer explicitement les champs qu'Eloquent est autorisé à remplir automatiquement pour éviter qu'un champ sensible, comme `id`, soit modifié involontairement.
+
+---
+
+### 3.Pourquoi convertir active en booléen ?
+
+Dans la base de données, la valeur peut être représentée par 0 ou 1.
+
+---
+
+### 4.Pourquoi convertir les dates en objets ?
+
+Pour pouvoir utiliser les fonctionnalités de manipulation des dates plutôt que de travailler avec de simples chaînes de caractères.
+
+---
+
+
