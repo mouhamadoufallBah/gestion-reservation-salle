@@ -1,6 +1,6 @@
 <?php
 
-use App\Core\Database;
+use App\Repository\Database;
 
 define('BASE_PATH', dirname(__DIR__));
 

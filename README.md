@@ -95,4 +95,27 @@ Pour pouvoir utiliser les fonctionnalités de manipulation des dates plutôt que
 
 ---
 
+# Étape 4 — Ajouter les données initiales
 
+### 1.Quelle différence existe entre migration et seeder ?
+
+La migration permet de creer ou de modifier la structure de la base de donne tandis que les seeder permet d'inserer des ligne dans le table de la base de donne.
+
+---
+
+### 2.Pourquoi les données initiales doivent-elles être reproductibles ?
+
+Les données initiales doivent être reproductibles pour pouvoir exécuter plusieurs fois le seeder sans créer de données incorrectes ou de doublons.
+
+C'est particulièrement utile lorsqu'on :
+- installe le projet sur une nouvelle machine ;
+- recree la base de donnees ;
+- travaille en equipe ;
+- veut reinitialiser rapidement les donnees.
+
+---
+
+### 3.Comment empêcher les doublons ?
+
+On peut mettre une collone a unique ou utiliser UpdateOrInsert() qui verifie l'existance pour savoir s'il doit cree ou modifie.
+---
