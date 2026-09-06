@@ -1,44 +1,59 @@
 <?php
 
 use App\Repository\Database;
-use App\Validation\SalleValidator;
+use FastRoute\Dispatcher;
 
 define('BASE_PATH', dirname(__DIR__));
 
-require_once(BASE_PATH . "/vendor/autoload.php");
+require_once BASE_PATH . '/vendor/autoload.php';
 
 $dotenv = Dotenv\Dotenv::createImmutable(BASE_PATH);
 $dotenv->load();
 
-try {
-    Database::getInstance();
+$container = require BASE_PATH . '/config/container.php';
 
-    echo "Connexion réussie !";
+$dispatcher = FastRoute\simpleDispatcher(
+    require BASE_PATH . '/routes/web.php'
+);
 
-    // $salleValidator = new SalleValidator();
+$uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+$method = $_SERVER['REQUEST_METHOD'];
 
-    // $data = [
-    //     'nom' => 'Aw',
-    //     'batiment' => 'Aa',
-    //     'capacite' => 500,
-    //     'type' => 'reunio',
-    //     'active' => '1',
-    // ];
+$routeInfo = $dispatcher->dispatch($method, $uri);
 
-    // $resultat = $salleValidator->validate($data);
+switch ($routeInfo[0]) {
 
-    // if (!$resultat->isValid()) {
+    case Dispatcher::NOT_FOUND:
 
-    //     $errors = $resultat->errors();
+        http_response_code(404);
 
-    //     print_r($errors);
-    // } else {
+        require BASE_PATH . '/templates/errors/404.html.php';
 
-    //     $dataValide = $resultat->data();
+        break;
 
-    //     print_r($dataValide);
-    //     // Enregistrement...
-    // }
-} catch (RuntimeException $e) {
-    echo $e->getMessage();
+    case Dispatcher::METHOD_NOT_ALLOWED:
+
+        http_response_code(405);
+
+        $allowedMethods = $routeInfo[1];
+
+        header(
+            'Allow: ' . implode(', ', $allowedMethods)
+        );
+
+        require BASE_PATH . '/templates/errors/405.html.php';
+
+        break;
+
+    case Dispatcher::FOUND:
+
+        [$controllerClass, $action] = $routeInfo[1];
+
+        $vars = $routeInfo[2];
+
+        $controller = $container->get($controllerClass);
+
+        $controller->$action(...array_values($vars));
+
+        break;
 }

@@ -6,13 +6,11 @@ use FastRoute\RouteCollector;
 
 return function (RouteCollector $r): void {
 
-    // Accueil
     $r->addRoute('GET', '/', [
-        // HomeController::class,
+        ReservationController::class,
         'index'
     ]);
 
-    // Salles
     $r->addRoute('GET', '/salles', [
         SalleController::class,
         'index'
@@ -43,7 +41,6 @@ return function (RouteCollector $r): void {
         'update'
     ]);
 
-    // Réservations
     $r->addRoute('GET', '/reservations', [
         ReservationController::class,
         'index'
