@@ -146,4 +146,31 @@ On le stock dans un tableau associatif
 
 ---
 
+# Étape 6 — Créer les objets de transport
+
+### 1.Quelle différence existe entre DTO et modèle Eloquent ?
+
+Le DTO veille a que le service ait les donnees qu'il faut lors d'une operation de mis a jours ou de recuperation .
+
+---
+
+### 2.Pourquoi le DTO ne doit-il pas appeler save() ?
+
+Parce qu'il ne gere pas insertion a la base il veille que le service aient tout les donnees qu'il faut pour utiliser la methode save du repository .
+
+---
+
+### 3.À quel moment transforme-t-on les chaînes en dates ?
+
+C'est au niveau du DTO.
+
+---
+
+### 4.Le DTO doit-il contenir la règle de chevauchement ?
+
+Non car le chevauchement est un regle metier.
+---
+
+
+
 
