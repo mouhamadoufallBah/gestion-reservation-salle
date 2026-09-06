@@ -1,10 +1,12 @@
 <?php
+namespace App\Controller;
 
 use App\DTO\CreerSalleDTO;
 use App\DTO\ModifierSalleDTO;
 use App\Model\TypeSalleEnum;
 use App\Service\CreerSalleService;
 use App\Validation\ValidatorInterface;
+use View;
 
 class SalleController
 {

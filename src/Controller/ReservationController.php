@@ -1,4 +1,5 @@
 <?php
+namespace App\Controller;
 
 use App\DTO\AnnulerReservationDTO;
 use App\DTO\CreerReservationDTO;
@@ -7,6 +8,7 @@ use App\Service\CreerReservationService;
 use App\Validation\ReservationValidator;
 use App\Validation\ValidatorInterface;
 use App\Validator\CreerReservationValidator;
+use View;
 
 class ReservationController
 {
