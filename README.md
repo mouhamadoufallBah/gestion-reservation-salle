@@ -198,6 +198,35 @@ Il rend notre application beaucoup plus flexible.
 
 ---
 
+# Étape 8 — Implémenter les règles métier
+
+### 1.Pourquoi ces règles ne sont-elles pas dans le contrôleur ? 
+
+Parce que le cotroller a pour but de recuperer les requettes appeler le validation et les dto puis de le donne au service pour enfin retourner une reponse a la vue. si on met les regle metier dans le controller on pourra pas reutiliser  ce code.
+
+---
+
+### 2.Pourquoi le service dépend-il d’une interface de Repository ?
+
+Pour que le service ne dépende pas directement d'Eloquent. Il dépend seulement des opérations dont il a besoin.
+On a applique le principe `L(Luskov substitution)` de SOLID 
+
+---
+
+### 3.Quelle exception doit être levée en cas de conflit ?
+
+Dans notre exercice, on utilise SalleIndisponibleException, puisque le conflit signifie que la salle n'est pas disponible à cette période.
+
+---
+
+### 4.Comment tester le service sans MySQL ?
+
+On remplace les vrais repositories par des objets de test qui implémentent les mêmes interfaces. Le service reçoit donc un faux SalleRepositoryInterface et un faux ReservationRepositoryInterface.
+
+---
+
+
+
 
 
 
