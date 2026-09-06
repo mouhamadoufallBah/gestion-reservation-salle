@@ -169,7 +169,36 @@ C'est au niveau du DTO.
 ### 4.Le DTO doit-il contenir la règle de chevauchement ?
 
 Non car le chevauchement est un regle metier.
+
 ---
+
+# Étape 7 — Créer l’accès aux données
+
+### 1.Eloquent constitue-t-il déjà un accès aux données ?
+
+Oui eloquent a access a notre base de doone
+
+---
+
+### 2.Pourquoi ajouter un Repository au-dessus d’Eloquent ?
+
+Pour Isoler du reste de l'aplication
+
+---
+
+### 3.Cette abstraction est-elle toujours nécessaire ?
+
+C'est pas neccessaire on peut utiliser eloquent dans le service ou meme le controller mais pour une bonne evolutivite de l'application mieux vaut l'isoler. Car si demain on devait changer d'orm on touchera ni au service ni au controller mais au repository seulement.
+
+---
+
+### 4.Quel avantage apporte-t-elle ?
+
+Il rend notre application beaucoup plus flexible.
+
+---
+
+
 
 
 
