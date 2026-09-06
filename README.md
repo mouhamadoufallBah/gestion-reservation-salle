@@ -9,9 +9,9 @@ Il permet de gérer les bibliothèques et les dépendances utilisées dans notre
 
 ### 2. Quelle différence existe entre `require` et `require-dev` ?
 
-- **`require`** : contient les dépendances nécessaires au fonctionnement du projet. Elles sont installées en développement et en production.
+- `require` : contient les dépendances nécessaires au fonctionnement du projet. Elles sont installées en développement et en production.
 
-- **`require-dev`** : contient les dépendances utilisées uniquement pendant le développement, comme les outils de test ou de débogage. Elles ne sont généralement pas installées en production.
+- `require-dev` : contient les dépendances utilisées uniquement pendant le développement, comme les outils de test ou de débogage. Elles ne sont généralement pas installées en production.
 
 ---
 
@@ -225,10 +225,46 @@ On remplace les vrais repositories par des objets de test qui implémentent les 
 
 ---
 
+# Étape 9 — Mettre en place le routage avec FastRoute
 
+### 1. Pourquoi FastRoute ne construit-il pas lui-même le contrôleur ?
 
+FastRoute est responsable uniquement du routage. Son rôle est de trouver la route qui correspond à la requête HTTP et de retourner le handler associé.
 
+Il ne construit pas lui-même le contrôleur car il ne doit pas gérer les dépendances de celui-ci. C'est le rôle du conteneur de dépendances de construire le contrôleur et d'injecter les services dont il a besoin.
 
+---
 
+### 2. Quelle différence existe entre `404` et `405` ?
 
+- `404 Not Found` : aucune route ne correspond au chemin demandé.
 
+- `405 Method Not Allowed` : la route existe, mais la méthode HTTP utilisée n'est pas autorisée.
+
+Par exemple, si `/salles` accepte uniquement `GET` et qu'on envoie une requête `POST`, le serveur doit retourner une réponse `405`.
+
+Dans ce cas, on ajoute également l'en-tête `Allow` pour indiquer les méthodes autorisées.
+
+---
+
+### 3. Pourquoi contraindre `{id}` avec `\d+` ?
+
+`\d+` permet de préciser que le paramètre `{id}` doit contenir uniquement des chiffres.
+
+Cela permet d'accepter une URL comme `/salles/15`, mais de refuser `/salles/abc`.
+
+Cette contrainte permet donc de vérifier directement le format de l'identifiant au niveau du routage.
+
+---
+
+### 4. Quel composant doit interpréter le handler retourné ?
+
+C'est le dispatcher de l'application qui doit interpréter le handler retourné par FastRoute et utiliser le conteneur pour récupérer le contrôleur correspondant.
+
+Par exemple, FastRoute peut retourner :
+
+```php
+[
+    SalleController::class,
+    'show'
+]
