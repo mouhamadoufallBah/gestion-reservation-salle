@@ -119,3 +119,31 @@ C'est particulièrement utile lorsqu'on :
 
 On peut mettre une collone a unique ou utiliser UpdateOrInsert() qui verifie l'existance pour savoir s'il doit cree ou modifie.
 ---
+
+# Étape 5 — Créer la validation
+
+### 1.Pourquoi séparer la validation syntaxique des règles métier ?
+
+On les separer pour appliquer le principe `SRP` la validation verifie unique si les donnee sont valide on les regle metier concerne le fonctionnement de l'application
+
+---
+
+### 2.Pourquoi créer une interface de validation ?
+
+On cree l'interface pour que tout nos validators aient une meme methode qui change de comportement
+
+---
+
+### 3.Pourquoi le validateur ne doit-il pas enregistrer les données ?
+
+Parce que sont role est de veiller a la coherence des donnees pas plus. il y a une autre couche qui se charge de ca.
+
+---
+
+### 4.Comment retourner plusieurs erreurs en une seule fois ?
+
+On le stock dans un tableau associatif
+
+---
+
+
