@@ -1,49 +1,122 @@
-name: Build and Push Docker Image
+name: Build and Push Docker Images
 
 on:
+  # Lorsqu'un nouveau tag v* est poussé
   push:
     tags:
-      - 'v*'
+      - "v*"
 
+  # Permet de lancer manuellement la publication
   workflow_dispatch:
 
 env:
-  DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
   IMAGE_NAME: gestion-reservation-salles
 
 jobs:
 
-  # ==========================================
-  # BUILD & PUSH
-  # ==========================================
-  docker:
-    name: Build and Push Docker Image
+  # ==========================================================
+  # RÉCUPÉRER TOUS LES TAGS
+  # ==========================================================
+  get-tags:
+    name: Get Git Tags
     runs-on: ubuntu-latest
+
+    outputs:
+      tags: ${{ steps.tags.outputs.tags }}
+      latest_tag: ${{ steps.tags.outputs.latest_tag }}
+
+    steps:
+
+      # ------------------------------------------------------
+      # Récupérer tout l'historique et tous les tags
+      # ------------------------------------------------------
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      # ------------------------------------------------------
+      # Récupérer les tags v*
+      # ------------------------------------------------------
+      - name: Get tags
+        id: tags
+        shell: bash
+        run: |
+
+          echo "Tags GitHub trouvés :"
+
+          TAGS=$(git tag --list 'v*' --sort=-v:refname)
+
+          if [ -z "$TAGS" ]; then
+            echo "Aucun tag v* trouvé."
+            exit 1
+          fi
+
+          echo "$TAGS"
+
+          # Transformer les tags en JSON pour la matrix GitHub
+          TAGS_JSON=$(printf '%s\n' "$TAGS" | jq -R -s -c 'split("\n") | map(select(length > 0))')
+
+          # Le premier est le plus récent grâce au tri
+          LATEST_TAG=$(printf '%s\n' "$TAGS" | head -n 1)
+
+          echo "tags=$TAGS_JSON" >> "$GITHUB_OUTPUT"
+          echo "latest_tag=$LATEST_TAG" >> "$GITHUB_OUTPUT"
+
+          echo ""
+          echo "Latest tag : $LATEST_TAG"
+
+
+  # ==========================================================
+  # BUILD + PUSH
+  # ==========================================================
+  docker:
+    name: Build ${{ matrix.tag }}
+    needs: get-tags
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        tag: ${{ fromJSON(needs.get-tags.outputs.tags) }}
 
     permissions:
       contents: read
 
     steps:
 
-      # ------------------------------------------
-      # 1. Récupérer le code
-      # ------------------------------------------
+      # ------------------------------------------------------
+      # Checkout du projet
+      # ------------------------------------------------------
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          fetch-tags: true
+
+      # ------------------------------------------------------
+      # Se placer exactement sur le tag
+      # ------------------------------------------------------
+      - name: Checkout Git tag
+        run: |
+          git checkout ${{ matrix.tag }}
+
+          echo "Version utilisée :"
+          git describe --tags --exact-match
 
 
-      # ------------------------------------------
-      # 2. Configurer Docker Buildx
-      # ------------------------------------------
+      # ------------------------------------------------------
+      # Docker Buildx
+      # ------------------------------------------------------
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
 
-      # ------------------------------------------
-      # 3. Connexion à Docker Hub
-      # ------------------------------------------
+      # ------------------------------------------------------
+      # Connexion Docker Hub
+      # ------------------------------------------------------
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
@@ -51,9 +124,9 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
 
-      # ------------------------------------------
-      # 4. Récupérer le tag Git
-      # ------------------------------------------
+      # ------------------------------------------------------
+      # Générer les métadonnées Docker
+      # ------------------------------------------------------
       - name: Extract Docker metadata
         id: meta
         uses: docker/metadata-action@v5
@@ -61,23 +134,27 @@ jobs:
           images: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}
 
           tags: |
-            type=ref,event=tag
-            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
+            type=raw,value=${{ matrix.tag }}
+            type=raw,value=latest,enable=${{ matrix.tag == needs.get-tags.outputs.latest_tag }}
 
 
-      # ------------------------------------------
-      # 5. Build + Push
-      # ------------------------------------------
+      # ------------------------------------------------------
+      # Build + Push
+      # ------------------------------------------------------
       - name: Build and Push Docker Image
         uses: docker/build-push-action@v6
         with:
+
           context: .
+
           file: ./docker/php/Dockerfile
 
           push: true
 
           tags: ${{ steps.meta.outputs.tags }}
+
           labels: ${{ steps.meta.outputs.labels }}
 
           cache-from: type=gha
+
           cache-to: type=gha,mode=max
