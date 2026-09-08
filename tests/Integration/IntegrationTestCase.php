@@ -23,6 +23,7 @@ abstract class IntegrationTestCase extends TestCase
         ]);
 
         $this->capsule->setAsGlobal();
+
         $this->capsule->bootEloquent();
 
         $this->creerTables();
@@ -32,7 +33,11 @@ abstract class IntegrationTestCase extends TestCase
     {
         $schema = $this->capsule->schema();
 
+        /*
+         * Table salles
+         */
         $schema->create('salles', function (Blueprint $table) {
+
             $table->id();
 
             $table->string('nom');
@@ -43,13 +48,16 @@ abstract class IntegrationTestCase extends TestCase
 
             $table->string('type');
 
-            $table->boolean('active')
-                ->default(true);
+            $table->boolean('active')->default(true);
 
             $table->timestamps();
         });
 
+        /*
+         * Table reservations
+         */
         $schema->create('reservations', function (Blueprint $table) {
+
             $table->id();
 
             $table->foreignId('salle_id')
@@ -65,9 +73,8 @@ abstract class IntegrationTestCase extends TestCase
             $table->dateTime('date_debut');
 
             $table->dateTime('date_fin');
-
-            $table->string('statut')
-                ->default('confirmée');
+            
+            $table->string('statut')->default('confirmée');;
 
             $table->timestamps();
         });
