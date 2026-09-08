@@ -71,7 +71,7 @@ class Seed
                 'motif' => 'Cours de programmation PHP',
                 'date_debut' => '2026-09-10 08:00:00',
                 'date_fin' => '2026-09-10 12:00:00',
-                'statut' => 'en_attente',
+                'statut' => 'annulée',
             ],
             [
                 'salle_id' => 2,
@@ -80,7 +80,7 @@ class Seed
                 'motif' => 'Réunion pédagogique',
                 'date_debut' => '2026-09-11 09:00:00',
                 'date_fin' => '2026-09-11 11:00:00',
-                'statut' => 'confirmee',
+                'statut' => 'confirmée',
             ],
             [
                 'salle_id' => 3,
@@ -89,7 +89,7 @@ class Seed
                 'motif' => 'Travaux pratiques de chimie',
                 'date_debut' => '2026-09-12 14:00:00',
                 'date_fin' => '2026-09-12 17:00:00',
-                'statut' => 'confirmee',
+                'statut' => 'confirmée',
             ],
         ];
 

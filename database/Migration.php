@@ -1,55 +1,30 @@
 <?php
 
-namespace Tests\Integration;
+namespace Database;
 
-use Illuminate\Database\Capsule\Manager as Capsule;
+use Illuminate\Database\Capsule\Manager;
 use Illuminate\Database\Schema\Blueprint;
-use PHPUnit\Framework\TestCase;
 
-abstract class IntegrationTestCase extends TestCase
+class Migration
 {
-    protected Capsule $capsule;
-
-    protected function setUp(): void
+    public function run(): void
     {
-        parent::setUp();
+        if (Manager::schema()->hasTable('salles')) {
+            echo "La table salles existe déjà.\n";
+            return;
+        }
 
-        $this->capsule = new Capsule();
-
-        $this->capsule->addConnection([
-            'driver' => 'sqlite',
-            'database' => ':memory:',
-            'prefix' => '',
-        ]);
-
-        $this->capsule->setAsGlobal();
-        $this->capsule->bootEloquent();
-
-        $this->creerTables();
-    }
-
-    protected function creerTables(): void
-    {
-        $schema = $this->capsule->schema();
-
-        $schema->create('salles', function (Blueprint $table) {
+        Manager::schema()->create('salles', function (Blueprint $table) {
             $table->id();
-
-            $table->string('nom');
-
+            $table->string('nom')->unique();
             $table->string('batiment');
-
             $table->integer('capacite');
-
             $table->string('type');
-
-            $table->boolean('active')
-                ->default(true);
-
+            $table->boolean('active')->default(true);
             $table->timestamps();
         });
 
-        $schema->create('reservations', function (Blueprint $table) {
+        Manager::schema()->create('reservations', function (Blueprint $table) {
             $table->id();
 
             $table->foreignId('salle_id')
@@ -57,19 +32,30 @@ abstract class IntegrationTestCase extends TestCase
                 ->cascadeOnDelete();
 
             $table->string('responsable');
-
             $table->string('email');
-
             $table->string('motif');
 
             $table->dateTime('date_debut');
-
             $table->dateTime('date_fin');
 
-            $table->string('statut')
-                ->default('confirmée');
+            $table->string('statut')->default('confirmée');
 
             $table->timestamps();
         });
+
+        echo "Table salles créée avec succès.\n";
+    }
+
+    public function down(): void
+    {
+        if (Manager::schema()->hasTable('reservations')) {
+            Manager::schema()->drop('reservations');
+            echo "Table reservations supprimée.\n";
+        }
+
+        if (Manager::schema()->hasTable('salles')) {
+            Manager::schema()->drop('salles');
+            echo "Table salles supprimée.\n";
+        }
     }
 }

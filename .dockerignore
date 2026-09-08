@@ -1,0 +1,8 @@
+.git
+.github
+docker-compose.yml
+tests
+vendor
+.idea
+.vscode
+*.log
