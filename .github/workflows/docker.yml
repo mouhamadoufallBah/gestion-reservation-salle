@@ -1,12 +1,10 @@
-name: Build and Push Docker Images
+name: Build and Push Docker Image
 
 on:
-  # Déclenché lorsqu'un nouveau tag v* est poussé
   push:
     tags:
       - "v*"
 
-  # Permet de lancer manuellement le workflow
   workflow_dispatch:
 
 env:
@@ -14,82 +12,11 @@ env:
 
 jobs:
 
-  # ==========================================================
-  # 1. RÉCUPÉRER TOUS LES TAGS GITHUB
-  # ==========================================================
-  get-tags:
-    name: Get Git Tags
-    runs-on: ubuntu-latest
-
-    outputs:
-      tags: ${{ steps.tags.outputs.tags }}
-      latest_tag: ${{ steps.tags.outputs.latest_tag }}
-
-    steps:
-
-      # --------------------------------------------------------
-      # Récupérer tout le dépôt + tous les tags
-      # --------------------------------------------------------
-      - name: Checkout repository
-        uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-          fetch-tags: true
-
-      # --------------------------------------------------------
-      # Récupérer les tags v*
-      # --------------------------------------------------------
-      - name: Get tags
-        id: tags
-        shell: bash
-        run: |
-
-          echo "======================================"
-          echo " TAGS GITHUB"
-          echo "======================================"
-
-          TAGS=$(git tag --list 'v*' --sort=-v:refname)
-
-          if [ -z "$TAGS" ]; then
-            echo "Aucun tag v* trouvé."
-            exit 1
-          fi
-
-          echo "$TAGS"
-
-          echo ""
-          echo "Nombre de tags :"
-          echo "$TAGS" | wc -l
-
-          # Transformer les tags en JSON
-          TAGS_JSON=$(printf '%s\n' "$TAGS" \
-            | jq -R -s -c 'split("\n") | map(select(length > 0))')
-
-          # Le premier est le plus récent
-          LATEST_TAG=$(printf '%s\n' "$TAGS" | head -n 1)
-
-          echo ""
-          echo "Latest tag : $LATEST_TAG"
-
-          echo "tags=$TAGS_JSON" >> "$GITHUB_OUTPUT"
-          echo "latest_tag=$LATEST_TAG" >> "$GITHUB_OUTPUT"
-
-
-  # ==========================================================
-  # 2. BUILD + PUSH DE CHAQUE TAG
-  # ==========================================================
   docker:
-    name: Build ${{ matrix.tag }}
 
-    needs: get-tags
+    name: Build and Push ${{ github.ref_name }}
 
     runs-on: ubuntu-latest
-
-    strategy:
-      fail-fast: false
-
-      matrix:
-        tag: ${{ fromJSON(needs.get-tags.outputs.tags) }}
 
     permissions:
       contents: read
@@ -97,124 +24,22 @@ jobs:
     steps:
 
       # ======================================================
-      # RÉCUPÉRER LE DÉPÔT
+      # RÉCUPÉRER LE CODE DU TAG
       # ======================================================
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-          fetch-tags: true
 
 
       # ======================================================
-      # SAUVEGARDER LES FICHIERS DOCKER ACTUELS
+      # AFFICHER LA VERSION
       # ======================================================
-      #
-      # Ils existent dans la branche actuelle mais pas
-      # forcément dans les anciens tags.
-      #
-      # ======================================================
-      - name: Save current Docker files
-        shell: bash
+      - name: Show version
         run: |
-
-          echo "Sauvegarde des fichiers Docker actuels..."
-
-          mkdir -p /tmp/docker-files
-
-          cp -R docker /tmp/docker-files/docker
-
-          echo "Dockerfile et configuration Docker sauvegardés."
-
-
-      # ======================================================
-      # SE PLACER SUR LE TAG HISTORIQUE
-      # ======================================================
-      - name: Checkout Git tag
-        shell: bash
-        run: |
-
           echo "======================================"
-          echo " VERSION"
+          echo "Version Docker"
           echo "======================================"
-
-          git checkout "${{ matrix.tag }}"
-
-          echo "Tag utilisé :"
-          git describe --tags --exact-match
-
-          echo ""
-          echo "Commit :"
-          git rev-parse HEAD
-
-
-      # ======================================================
-      # RESTAURER LES FICHIERS DOCKER ACTUELS
-      # ======================================================
-      #
-      # Cela permet de construire les anciennes versions
-      # même si elles ne possédaient pas encore docker/.
-      #
-      # ======================================================
-      - name: Restore Docker files
-        shell: bash
-        run: |
-
-          echo "Restauration des fichiers Docker..."
-
-          rm -rf docker
-
-          cp -R /tmp/docker-files/docker docker
-
-          echo ""
-          echo "Structure Docker :"
-
-          find docker -maxdepth 3 -type f | sort
-
-
-      # ======================================================
-      # VÉRIFIER LES FICHIERS NÉCESSAIRES
-      # ======================================================
-      - name: Check project files
-        shell: bash
-        run: |
-
-          echo "======================================"
-          echo " VÉRIFICATION"
-          echo "======================================"
-
-          echo ""
-          echo "Commit courant :"
-          git rev-parse HEAD
-
-          echo ""
-          echo "Dockerfile :"
-
-          test -f docker/php/Dockerfile \
-            && echo "OK : docker/php/Dockerfile" \
-            || {
-              echo "ERREUR : Dockerfile absent"
-              exit 1
-            }
-
-          echo ""
-          echo "composer.json :"
-
-          test -f composer.json \
-            && echo "OK : composer.json" \
-            || {
-              echo "ERREUR : composer.json absent"
-              exit 1
-            }
-
-          echo ""
-          echo "composer.lock :"
-
-          if [ -f composer.lock ]; then
-            echo "OK : composer.lock"
-          else
-            echo "ATTENTION : composer.lock absent"
-          fi
+          echo "Tag : ${{ github.ref_name }}"
+          echo "Commit : ${{ github.sha }}"
 
 
       # ======================================================
@@ -235,7 +60,7 @@ jobs:
 
 
       # ======================================================
-      # MÉTADONNÉES DOCKER
+      # MÉTADONNÉES
       # ======================================================
       - name: Extract Docker metadata
         id: meta
@@ -245,8 +70,8 @@ jobs:
           images: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}
 
           tags: |
-            type=raw,value=${{ matrix.tag }}
-            type=raw,value=latest,enable=${{ matrix.tag == needs.get-tags.outputs.latest_tag }}
+            type=raw,value=${{ github.ref_name }}
+            type=raw,value=latest
 
 
       # ======================================================
