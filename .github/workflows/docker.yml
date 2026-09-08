@@ -1,12 +1,12 @@
 name: Build and Push Docker Images
 
 on:
-  # Lorsqu'un nouveau tag v* est poussé
+  # Déclenché lorsqu'un nouveau tag v* est poussé
   push:
     tags:
       - "v*"
 
-  # Permet de lancer manuellement la publication
+  # Permet de lancer manuellement le workflow
   workflow_dispatch:
 
 env:
@@ -15,7 +15,7 @@ env:
 jobs:
 
   # ==========================================================
-  # RÉCUPÉRER TOUS LES TAGS
+  # 1. RÉCUPÉRER TOUS LES TAGS GITHUB
   # ==========================================================
   get-tags:
     name: Get Git Tags
@@ -27,24 +27,26 @@ jobs:
 
     steps:
 
-      # ------------------------------------------------------
-      # Récupérer tout l'historique et tous les tags
-      # ------------------------------------------------------
-      - name: Checkout
-        uses: actions/checkout@v4
+      # --------------------------------------------------------
+      # Récupérer tout le dépôt + tous les tags
+      # --------------------------------------------------------
+      - name: Checkout repository
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
           fetch-tags: true
 
-      # ------------------------------------------------------
+      # --------------------------------------------------------
       # Récupérer les tags v*
-      # ------------------------------------------------------
+      # --------------------------------------------------------
       - name: Get tags
         id: tags
         shell: bash
         run: |
 
-          echo "Tags GitHub trouvés :"
+          echo "======================================"
+          echo " TAGS GITHUB"
+          echo "======================================"
 
           TAGS=$(git tag --list 'v*' --sort=-v:refname)
 
@@ -55,30 +57,37 @@ jobs:
 
           echo "$TAGS"
 
-          # Transformer les tags en JSON pour la matrix GitHub
-          TAGS_JSON=$(printf '%s\n' "$TAGS" | jq -R -s -c 'split("\n") | map(select(length > 0))')
+          echo ""
+          echo "Nombre de tags :"
+          echo "$TAGS" | wc -l
 
-          # Le premier est le plus récent grâce au tri
+          # Transformer les tags en JSON
+          TAGS_JSON=$(printf '%s\n' "$TAGS" \
+            | jq -R -s -c 'split("\n") | map(select(length > 0))')
+
+          # Le premier est le plus récent
           LATEST_TAG=$(printf '%s\n' "$TAGS" | head -n 1)
-
-          echo "tags=$TAGS_JSON" >> "$GITHUB_OUTPUT"
-          echo "latest_tag=$LATEST_TAG" >> "$GITHUB_OUTPUT"
 
           echo ""
           echo "Latest tag : $LATEST_TAG"
 
+          echo "tags=$TAGS_JSON" >> "$GITHUB_OUTPUT"
+          echo "latest_tag=$LATEST_TAG" >> "$GITHUB_OUTPUT"
+
 
   # ==========================================================
-  # BUILD + PUSH
+  # 2. BUILD + PUSH DE CHAQUE TAG
   # ==========================================================
   docker:
     name: Build ${{ matrix.tag }}
+
     needs: get-tags
 
     runs-on: ubuntu-latest
 
     strategy:
       fail-fast: false
+
       matrix:
         tag: ${{ fromJSON(needs.get-tags.outputs.tags) }}
 
@@ -87,50 +96,152 @@ jobs:
 
     steps:
 
-      # ------------------------------------------------------
-      # Checkout du projet
-      # ------------------------------------------------------
-      - name: Checkout
-        uses: actions/checkout@v4
+      # ======================================================
+      # RÉCUPÉRER LE DÉPÔT
+      # ======================================================
+      - name: Checkout repository
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
           fetch-tags: true
 
-      # ------------------------------------------------------
-      # Se placer exactement sur le tag
-      # ------------------------------------------------------
-      - name: Checkout Git tag
-        run: |
-          git checkout ${{ matrix.tag }}
 
-          echo "Version utilisée :"
+      # ======================================================
+      # SAUVEGARDER LES FICHIERS DOCKER ACTUELS
+      # ======================================================
+      #
+      # Ils existent dans la branche actuelle mais pas
+      # forcément dans les anciens tags.
+      #
+      # ======================================================
+      - name: Save current Docker files
+        shell: bash
+        run: |
+
+          echo "Sauvegarde des fichiers Docker actuels..."
+
+          mkdir -p /tmp/docker-files
+
+          cp -R docker /tmp/docker-files/docker
+
+          echo "Dockerfile et configuration Docker sauvegardés."
+
+
+      # ======================================================
+      # SE PLACER SUR LE TAG HISTORIQUE
+      # ======================================================
+      - name: Checkout Git tag
+        shell: bash
+        run: |
+
+          echo "======================================"
+          echo " VERSION"
+          echo "======================================"
+
+          git checkout "${{ matrix.tag }}"
+
+          echo "Tag utilisé :"
           git describe --tags --exact-match
 
+          echo ""
+          echo "Commit :"
+          git rev-parse HEAD
 
-      # ------------------------------------------------------
-      # Docker Buildx
-      # ------------------------------------------------------
+
+      # ======================================================
+      # RESTAURER LES FICHIERS DOCKER ACTUELS
+      # ======================================================
+      #
+      # Cela permet de construire les anciennes versions
+      # même si elles ne possédaient pas encore docker/.
+      #
+      # ======================================================
+      - name: Restore Docker files
+        shell: bash
+        run: |
+
+          echo "Restauration des fichiers Docker..."
+
+          rm -rf docker
+
+          cp -R /tmp/docker-files/docker docker
+
+          echo ""
+          echo "Structure Docker :"
+
+          find docker -maxdepth 3 -type f | sort
+
+
+      # ======================================================
+      # VÉRIFIER LES FICHIERS NÉCESSAIRES
+      # ======================================================
+      - name: Check project files
+        shell: bash
+        run: |
+
+          echo "======================================"
+          echo " VÉRIFICATION"
+          echo "======================================"
+
+          echo ""
+          echo "Commit courant :"
+          git rev-parse HEAD
+
+          echo ""
+          echo "Dockerfile :"
+
+          test -f docker/php/Dockerfile \
+            && echo "OK : docker/php/Dockerfile" \
+            || {
+              echo "ERREUR : Dockerfile absent"
+              exit 1
+            }
+
+          echo ""
+          echo "composer.json :"
+
+          test -f composer.json \
+            && echo "OK : composer.json" \
+            || {
+              echo "ERREUR : composer.json absent"
+              exit 1
+            }
+
+          echo ""
+          echo "composer.lock :"
+
+          if [ -f composer.lock ]; then
+            echo "OK : composer.lock"
+          else
+            echo "ATTENTION : composer.lock absent"
+          fi
+
+
+      # ======================================================
+      # DOCKER BUILDX
+      # ======================================================
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
 
-      # ------------------------------------------------------
-      # Connexion Docker Hub
-      # ------------------------------------------------------
+      # ======================================================
+      # LOGIN DOCKER HUB
+      # ======================================================
       - name: Login to Docker Hub
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
 
-      # ------------------------------------------------------
-      # Générer les métadonnées Docker
-      # ------------------------------------------------------
+      # ======================================================
+      # MÉTADONNÉES DOCKER
+      # ======================================================
       - name: Extract Docker metadata
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
+
           images: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}
 
           tags: |
@@ -138,11 +249,11 @@ jobs:
             type=raw,value=latest,enable=${{ matrix.tag == needs.get-tags.outputs.latest_tag }}
 
 
-      # ------------------------------------------------------
-      # Build + Push
-      # ------------------------------------------------------
+      # ======================================================
+      # BUILD + PUSH
+      # ======================================================
       - name: Build and Push Docker Image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
 
           context: .
@@ -158,4 +269,3 @@ jobs:
           cache-from: type=gha
 
           cache-to: type=gha,mode=max
-          
