@@ -1,36 +1,54 @@
 <?php
+
 namespace App\Controller;
 
-use App\DTO\AnnulerReservationDTO;
 use App\DTO\CreerReservationDTO;
+use App\Service\AfficherReservationService;
 use App\Service\AnnulerReservationService;
 use App\Service\CreerReservationService;
+use App\Service\ListerReservationsService;
+use App\Service\ListerSallesService;
+use App\Validation\AnnulationReservationValidator;
 use App\Validation\ReservationValidator;
-use App\Validation\ValidatorInterface;
-use App\Validator\CreerReservationValidator;
-use View;
+use App\View\View;
 
 class ReservationController
 {
     public function __construct(
         private CreerReservationService $creerReservationService,
         private AnnulerReservationService $annulerReservationService,
-        private ValidatorInterface $validator
+        private ReservationValidator $validator,
+        private ListerSallesService $listerSallesService,
+        private ListerReservationsService $listerReservationsService,
+        private AfficherReservationService $afficherReservationService,
+        private AnnulationReservationValidator $annulationValidator,
     ) {}
 
     public function index(): void
     {
-        View::getInstance()->renderView('reservation/index');
+        $reservations = $this->listerReservationsService->execute();
+
+        View::getInstance()->renderView('reservation/index', [
+            'reservations' => $reservations
+        ]);
     }
 
-    public function show(): void
+    public function show(string $id): void
     {
-        View::getInstance()->renderView('reservation/show');
+        $reservation = $this->afficherReservationService->execute($id);
+
+        View::getInstance()->renderView('reservation/show', [
+            'reservation' => $reservation
+        ]);
     }
 
     public function create(): void
     {
-        View::getInstance()->renderView('reservation/form');
+        $salles = $this->listerSallesService->execute();
+
+        View::getInstance()->renderView('reservation/form', [
+            'salles' => $salles
+        ]);
     }
 
     public function store(): void
@@ -44,13 +62,6 @@ class ReservationController
             'dateFin' => $_POST['dateFin'] ?? '',
         ];
 
-        $errors = $this->validator->validate($data);
-
-        if (!empty($errors)) {
-            View::getInstance()->renderView('reservation/form');
-            return;
-        }
-
         $dto = new CreerReservationDTO(
             salleId: (int) $data['salleId'],
             responsable: $data['responsable'],
@@ -60,26 +71,32 @@ class ReservationController
             dateFin: new \DateTimeImmutable($data['dateFin'])
         );
 
-        $this->creerReservationService->execute($dto);
+        $errors = $this->validator->validate($data);
 
+
+        if (!empty($errors->errors())) {
+            View::getInstance()->renderView('reservation/form');
+            return;
+        }
+
+        $this->creerReservationService->execute($dto);
         header('Location: /reservations');
         exit;
     }
 
-    public function cancel(): void
+
+    public function cancel(string $id): void
     {
         $data = [
-            'id' => $_POST['id'] ?? '',
+            'id' => $id
         ];
 
-        $errors = $this->validator->validate($data);
+        $errors = $this->annulationValidator->validate($data);
 
-        if (!empty($errors)) {
-            View::getInstance()->renderView('reservation/show');
-            return;
+        if (!empty($errors->errors())) {
+            var_dump($errors->errors());
+            die;
         }
-
-        $id = (int) $data['id'];
 
         $this->annulerReservationService->execute($id);
 

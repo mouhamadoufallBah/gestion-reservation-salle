@@ -1,51 +1,84 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <title>Créer une salle</title>
-</head>
+<?php $salle = $salle ?? null; ?>
 
-<body>
+<h1>
+    <?= $salle ? 'Modifier la salle' : 'Ajouter une salle' ?>
+</h1>
 
-<h1>Créer une salle</h1>
-
-<form method="POST" action="/salles">
+<form
+    method="POST"
+    action="<?= $salle ? '/salles/' . $salle->id . '/edit' : '/salles' ?>"
+>
 
     <div>
-        <label for="nom">
-            Nom de la salle
-        </label>
+        <label for="nom">Nom</label>
 
         <input
             type="text"
             id="nom"
             name="nom"
-            placeholder="Ex : Salle B12"
+            value="<?= htmlspecialchars($salle->nom ?? '') ?>"
         >
     </div>
 
     <div>
-        <label for="capacite">
-            Capacité
-        </label>
+        <label for="batiment">Bâtiment</label>
+
+        <input
+            type="text"
+            id="batiment"
+            name="batiment"
+            value="<?= htmlspecialchars($salle->batiment ?? '') ?>"
+        >
+    </div>
+
+    <div>
+        <label for="capacite">Capacité</label>
 
         <input
             type="number"
             id="capacite"
             name="capacite"
-            placeholder="Ex : 40"
+            value="<?= $salle->capacite ?? '' ?>"
         >
     </div>
 
+    <div>
+        <label for="type">Type</label>
+
+        <select id="type" name="type">
+
+            <?php foreach (\App\Model\TypeSalleEnum::cases() as $type): ?>
+
+                <option
+                    value="<?= $type->value ?>"
+                    <?= isset($salle) && $salle?->type === $type ? 'selected' : '' ?>
+                >
+                    <?= htmlspecialchars($type->value) ?>
+                </option>
+
+            <?php endforeach; ?>
+
+        </select>
+    </div>
+
+    <div>
+        <label>
+            <input
+                type="checkbox"
+                name="active"
+                <?= ($salle->active ?? true) ? 'checked' : '' ?>
+            >
+
+            Active
+        </label>
+    </div>
+
     <button type="submit">
-        Créer la salle
+        <?= $salle ? 'Modifier' : 'Ajouter' ?>
     </button>
 
 </form>
 
 <a href="/salles">
-    Retour
+    Retour aux salles
 </a>
-
-</body>
-</html>

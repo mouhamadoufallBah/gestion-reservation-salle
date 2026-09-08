@@ -2,7 +2,7 @@
 
 namespace App\DTO;
 
-use DateTimeImmutable;
+use App\Model\StatutReservationEnum;
 
 class ReservationDetailDTO
 {
@@ -12,8 +12,9 @@ class ReservationDetailDTO
         public readonly string $responsable,
         public readonly string $email,
         public readonly string $motif,
-        public readonly DateTimeImmutable $dateDebut,
-        public readonly DateTimeImmutable $dateFin,
+        public readonly \DateTimeImmutable $dateDebut,
+        public readonly \DateTimeImmutable $dateFin,
+        public readonly StatutReservationEnum $statut,
     ) {
     }
 }

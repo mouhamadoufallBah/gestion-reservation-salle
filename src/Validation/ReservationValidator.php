@@ -11,10 +11,10 @@ class ReservationValidator implements ValidatorInterface
         $errors = [];
 
         if (
-            !isset($data['salle_id']) ||
-            !v::intVal()->positive()->validate($data['salle_id'])
+            !isset($data['salleId']) ||
+            !v::intVal()->positive()->validate($data['salleId'])
         ) {
-            $errors['salle_id'] = 'L\'identifiant de la salle doit être un entier positif.';
+            $errors['salleId'] = 'L\'identifiant de la salle doit être un entier positif.';
         }
 
         if (
@@ -39,17 +39,17 @@ class ReservationValidator implements ValidatorInterface
         }
 
         if (
-            !isset($data['date_debut']) ||
-            !v::date()->validate($data['date_debut'])
+            !isset($data['dateDebut']) ||
+            !v::dateTime('Y-m-d\TH:i')->validate($data['dateDebut'])
         ) {
-            $errors['date_debut'] = 'La date de début est invalide.';
+            $errors['dateDebut'] = 'La date de début est invalide.';
         }
 
         if (
-            !isset($data['date_fin']) ||
-            !v::date()->validate($data['date_fin'])
+            !isset($data['dateFin']) ||
+            !v::dateTime('Y-m-d\TH:i')->validate($data['dateFin'])
         ) {
-            $errors['date_fin'] = 'La date de fin est invalide.';
+            $errors['dateFin'] = 'La date de fin est invalide.';
         }
 
         return new ValidationResult($data, $errors);

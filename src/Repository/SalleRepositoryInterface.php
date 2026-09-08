@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\DTO\CreerSalleDTO;
+use App\DTO\ModifierSalleDTO;
 use App\Model\Salle;
 
 interface SalleRepositoryInterface
@@ -15,4 +16,6 @@ interface SalleRepositoryInterface
     public function trouver(int $id): ?Salle;
 
     public function enregistrer(CreerSalleDTO $dto): Salle;
+
+    public function modifier(ModifierSalleDTO $dto): Salle;
 }

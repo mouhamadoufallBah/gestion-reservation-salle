@@ -2,8 +2,6 @@
 
 namespace App\Exception;
 
-use RuntimeException;
-
-class ReservationIntrouvableException extends RuntimeException
+class ReservationIntrouvableException extends \RuntimeException
 {
 }

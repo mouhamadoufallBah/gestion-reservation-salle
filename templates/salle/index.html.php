@@ -1,12 +1,3 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <title>Salles</title>
-</head>
-
-<body>
-
 <h1>Liste des salles</h1>
 
 <a href="/salles/create">
@@ -21,46 +12,71 @@
         <tr>
             <th>ID</th>
             <th>Nom</th>
+            <th>Bâtiment</th>
             <th>Capacité</th>
+            <th>Type</th>
+            <th>Statut</th>
             <th>Actions</th>
         </tr>
     </thead>
 
+
     <tbody>
 
-        <tr>
-            <td>1</td>
-            <td>Amphithéâtre A</td>
-            <td>250 places</td>
-            <td>
-                <a href="/salles/1">Voir</a>
-                <a href="/salles/1/edit">Modifier</a>
-            </td>
-        </tr>
+        <?php if (empty($salles)): ?>
 
-        <tr>
-            <td>2</td>
-            <td>Salle B12</td>
-            <td>40 places</td>
-            <td>
-                <a href="/salles/2">Voir</a>
-                <a href="/salles/2/edit">Modifier</a>
-            </td>
-        </tr>
+            <tr>
+                <td colspan="7">
+                    Aucune salle disponible.
+                </td>
+            </tr>
 
-        <tr>
-            <td>3</td>
-            <td>Laboratoire Chimie</td>
-            <td>24 places</td>
-            <td>
-                <a href="/salles/3">Voir</a>
-                <a href="/salles/3/edit">Modifier</a>
-            </td>
-        </tr>
+        <?php else: ?>
+
+            <?php foreach ($salles as $salle): ?>
+
+                <tr>
+                    <td>
+                        <?= $salle->id ?>
+                    </td>
+
+                    <td>
+                        <?= htmlspecialchars($salle->nom) ?>
+                    </td>
+
+                    <td>
+                        <?= htmlspecialchars($salle->batiment) ?>
+                    </td>
+
+                    <td>
+                        <?= $salle->capacite ?> places
+                    </td>
+
+                    <td>
+                        <?= htmlspecialchars($salle->type->value) ?>
+                    </td>
+
+                    <td>
+                        <?= $salle->active ? 'Active' : 'Inactive' ?>
+                    </td>
+
+                    <td>
+                        <a href="/salles/<?= $salle->id ?>">
+                            Voir
+                        </a>
+
+                        <a href="/salles/<?= $salle->id ?>/edit">
+                            Modifier
+                        </a>
+                    </td>
+                </tr>
+
+            <?php endforeach; ?>
+
+        <?php endif; ?>
 
     </tbody>
 
-</table>
 
-</body>
-</html>
+
+</table>

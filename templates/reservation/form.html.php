@@ -1,87 +1,88 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <title>Nouvelle réservation</title>
-</head>
+<?php $salles = $salles ?? []; ?>
 
-<body>
-
-<h1>Nouvelle réservation</h1>
+<h1>Créer une réservation</h1>
 
 <form method="POST" action="/reservations">
 
     <div>
-        <label for="salle">
-            Salle
-        </label>
+        <label for="salleId">Salle</label>
 
-        <select id="salle" name="salle_id">
+        <select name="salleId" id="salleId">
 
             <option value="">
-                -- Choisir une salle --
+                Choisir une salle
             </option>
 
-            <option value="1">
-                Amphithéâtre A
-            </option>
+            <?php foreach ($salles as $salle): ?>
 
-            <option value="2">
-                Salle B12
-            </option>
+                <option
+                    value="<?= $salle->id ?>"
+                    <?= ($reservation['salleId'] ?? '') == $salle->id ? 'selected' : '' ?>
+                >
+                    <?= htmlspecialchars($salle->nom) ?>
+                    - <?= $salle->capacite ?> places
+                </option>
 
-            <option value="3">
-                Laboratoire Chimie
-            </option>
+            <?php endforeach; ?>
 
         </select>
     </div>
 
     <div>
-        <label for="date">
-            Date
-        </label>
+        <label for="responsable">Responsable</label>
 
         <input
-            type="date"
-            id="date"
-            name="date"
+            type="text"
+            name="responsable"
+            id="responsable"
+            value="<?= htmlspecialchars($reservation['responsable'] ?? '') ?>"
         >
     </div>
 
     <div>
-        <label for="heure_debut">
-            Heure de début
-        </label>
+        <label for="email">Email</label>
 
         <input
-            type="time"
-            id="heure_debut"
-            name="heure_debut"
+            type="email"
+            name="email"
+            id="email"
+            value="<?= htmlspecialchars($reservation['email'] ?? '') ?>"
         >
     </div>
 
     <div>
-        <label for="heure_fin">
-            Heure de fin
-        </label>
+        <label for="motif">Motif</label>
+
+        <textarea
+            name="motif"
+            id="motif"
+        ><?= htmlspecialchars($reservation['motif'] ?? '') ?></textarea>
+    </div>
+
+    <div>
+        <label for="dateDebut">Date début</label>
 
         <input
-            type="time"
-            id="heure_fin"
-            name="heure_fin"
+            type="datetime-local"
+            name="dateDebut"
+            id="dateDebut"
+            value="<?= htmlspecialchars($reservation['dateDebut'] ?? '') ?>"
+        >
+    </div>
+
+    <div>
+        <label for="dateFin">Date fin</label>
+
+        <input
+            type="datetime-local"
+            name="dateFin"
+            id="dateFin"
+            value="<?= htmlspecialchars($reservation['dateFin'] ?? '') ?>"
         >
     </div>
 
     <button type="submit">
-        Créer la réservation
+        Réserver
     </button>
 
 </form>
-
-<a href="/reservations">
-    Retour
-</a>
-
-</body>
-</html>

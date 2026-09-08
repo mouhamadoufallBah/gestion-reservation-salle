@@ -1,34 +1,51 @@
 <?php
+
 namespace App\Controller;
 
 use App\DTO\CreerSalleDTO;
 use App\DTO\ModifierSalleDTO;
 use App\Model\TypeSalleEnum;
+use App\Service\AfficherSalleService;
 use App\Service\CreerSalleService;
-use App\Validation\ValidatorInterface;
-use View;
+use App\Service\ListerSallesService;
+use App\Service\ModifierSalleService;
+use App\Validation\SalleValidator;
+use App\View\View;
 
 class SalleController
 {
     public function __construct(
         private CreerSalleService $creerSalleService,
-        private ValidatorInterface $validator
-    ) {
-    }
+        private ModifierSalleService $modifierSalleService,
+        private ListerSallesService $listerSallesService,
+        private AfficherSalleService $afficherSalleService,
+        private SalleValidator $validator
+    ) {}
 
     public function index(): void
     {
-        View::getInstance()->renderView('salle/index');
+        $salles = $this->listerSallesService->execute();
+
+        View::getInstance()->renderView('salle/index', [
+            'salles' => $salles
+        ]);
     }
 
-    public function show(): void
+    public function show(string $id): void
     {
-        View::getInstance()->renderView('salle/show');
+        
+        $salle = $this->afficherSalleService->execute($id);
+
+        View::getInstance()->renderView('salle/show', [
+            'salle' => $salle
+        ]);
     }
 
     public function create(): void
     {
-        View::getInstance()->renderView('salle/form');
+        View::getInstance()->renderView('salle/form', [
+            'salle' => null
+        ]);
     }
 
     public function store(): void
@@ -43,8 +60,11 @@ class SalleController
 
         $errors = $this->validator->validate($data);
 
-        if (!empty($errors)) {
-            View::getInstance()->renderView('salle/form');
+        if (!empty($errors->errors())) {
+            View::getInstance()->renderView('salle/form', [
+                'errors' => $errors->errors(),
+                'salle' => $data
+            ]);
             return;
         }
 
@@ -62,29 +82,50 @@ class SalleController
         exit;
     }
 
-    public function edit(): void
+    public function edit(string $id): void
     {
-        View::getInstance()->renderView('salle/form');
+        $salle = $this->afficherSalleService->execute($id);
+
+        View::getInstance()->renderView('salle/form', [
+            'salle' => $salle
+        ]);
     }
 
-    public function update(): void
+    public function update(string $id): void
     {
-        $id = (int) ($_POST['id'] ?? 0);
-        $nom = $_POST['nom'] ?? '';
-        $batiment = $_POST['batiment'] ?? '';
-        $capacite = (int) ($_POST['capacite'] ?? 0);
-        $type = $_POST['type'] ?? '';
-        $active = isset($_POST['active']);
+        $data = [
+            'nom' => $_POST['nom'] ?? '',
+            'batiment' => $_POST['batiment'] ?? '',
+            'capacite' => $_POST['capacite'] ?? '',
+            'type' => $_POST['type'] ?? '',
+            'active' => isset($_POST['active']),
+        ];
+
+        $errors = $this->validator->validate($data);
+
+        if (!empty($errors->errors())) {
+            View::getInstance()->renderView('salle/form', [
+                'errors' => $errors->errors(),
+                'salle' => array_merge(
+                    ['id' => $id],
+                    $data
+                )
+            ]);
+            return;
+        }
 
         $dto = new ModifierSalleDTO(
             id: $id,
-            nom: $nom,
-            batiment: $batiment,
-            capacite: $capacite,
-            type: TypeSalleEnum::from($type),
-            active: $active
+            nom: $data['nom'],
+            batiment: $data['batiment'],
+            capacite: (int) $data['capacite'],
+            type: TypeSalleEnum::from($data['type']),
+            active: $data['active']
         );
 
-        var_dump($dto);
+        $this->modifierSalleService->execute($dto);
+
+        header('Location: /salles/' . $id);
+        exit;
     }
 }

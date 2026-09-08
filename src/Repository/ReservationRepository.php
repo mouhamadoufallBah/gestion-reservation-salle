@@ -5,9 +5,14 @@ namespace App\Repository;
 use App\DTO\CreerReservationDTO;
 use App\Model\Reservation;
 use App\Model\StatutReservationEnum;
+use Illuminate\Database\Capsule\Manager as Capsule;
+
 
 class ReservationRepository implements ReservationRepositoryInterface
 {
+
+    public function __construct(private Capsule $capsule) {}
+    
     public function lister(): array
     {
         return Reservation::query()

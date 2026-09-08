@@ -22,10 +22,8 @@ try {
         echo "Base de données créée avec succès.\n";
     }
 
-    // Maintenant seulement on se connecte à la base
     Database::getInstance();
 
-    // Le Seeder lance lui-même la migration
     $seed = new Seed();
 
     $seed->run();

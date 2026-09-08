@@ -1,56 +1,82 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <title>Détail réservation</title>
-</head>
+<?php
 
-<body>
+use App\Model\StatutReservationEnum;
+
+$reservation = $reservation ?? null;
+
+?>
 
 <h1>Détail de la réservation</h1>
 
-<div>
+<?php if ($reservation): ?>
 
-    <h2>Réservation #1</h2>
+    <div>
 
-    <p>
-        <strong>Salle :</strong>
-        Amphithéâtre A
-    </p>
+        <h2>
+            Réservation #<?= $reservation->id ?>
+        </h2>
 
-    <p>
-        <strong>Date :</strong>
-        10/09/2026
-    </p>
+        <p>
+            <strong>Salle :</strong>
+            <?= $reservation->salleId ?>
+        </p>
 
-    <p>
-        <strong>Heure de début :</strong>
-        08:00
-    </p>
+        <p>
+            <strong>Responsable :</strong>
+            <?= htmlspecialchars($reservation->responsable) ?>
+        </p>
 
-    <p>
-        <strong>Heure de fin :</strong>
-        10:00
-    </p>
+        <p>
+            <strong>Email :</strong>
+            <?= htmlspecialchars($reservation->email) ?>
+        </p>
 
-    <p>
-        <strong>Statut :</strong>
-        Confirmée
-    </p>
+        <p>
+            <strong>Motif :</strong>
+            <?= htmlspecialchars($reservation->motif) ?>
+        </p>
 
-    <form method="POST" action="/reservations/1/cancel">
+        <p>
+            <strong>Date :</strong>
+            <?= $reservation->dateDebut->format('d/m/Y') ?>
+        </p>
 
-        <button type="submit">
-            Annuler la réservation
-        </button>
+        <p>
+            <strong>Heure de début :</strong>
+            <?= $reservation->dateDebut->format('H:i') ?>
+        </p>
 
-    </form>
+        <p>
+            <strong>Heure de fin :</strong>
+            <?= $reservation->dateFin->format('H:i') ?>
+        </p>
 
-</div>
+        <p>
+            <strong>Statut :</strong>
+            <?= htmlspecialchars($reservation->statut->value) ?>
+        </p>
+
+        <?php if ($reservation->statut === StatutReservationEnum::CONFIRMEE): ?>
+
+            <form
+                method="POST"
+                action="/reservations/<?= $reservation->id ?>/cancel"
+            >
+                <button type="submit">
+                    Annuler la réservation
+                </button>
+            </form>
+
+        <?php endif; ?>
+
+    </div>
+
+<?php else: ?>
+
+    <p>Réservation introuvable.</p>
+
+<?php endif; ?>
 
 <a href="/reservations">
     Retour aux réservations
 </a>
-
-</body>
-</html>

@@ -17,11 +17,10 @@ class Reservation extends Model
     ];
 
     protected $casts = [
-        'date_debut' => 'datetime',
-        'date_fin' => 'datetime',
+        'date_debut' => 'immutable_datetime',
+        'date_fin' => 'immutable_datetime',
         'statut' => StatutReservationEnum::class
     ];
-
     public function salle()
     {
         return $this->belongsTo(Salle::class);

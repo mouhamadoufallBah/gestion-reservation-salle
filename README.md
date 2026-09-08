@@ -21,9 +21,9 @@ Il faut versionner `composer.lock` afin que tous les collaborateurs utilisent ex
 
 Lorsqu’un collaborateur clone le projet et exécute :
 
-```bash
+bash
 composer install
-```
+
 ---
 
 ### 4. Pourquoi ne versionne-t-on pas `vendor/`?
@@ -263,8 +263,53 @@ C'est le dispatcher de l'application qui doit interpréter le handler retourné 
 
 Par exemple, FastRoute peut retourner :
 
-```php
+php
 [
     SalleController::class,
     'show'
 ]
+
+---
+
+# Étape 10 — Configurer le conteneur DI
+
+**### 1. Quelle différence existe entre injection et conteneur ?**
+
+L'**injection de dépendances** est le fait de fournir à une classe les objets dont elle a besoin, généralement à travers son constructeur.
+
+Le **conteneur de dépendances** est l'outil qui se charge de créer les objets et de fournir automatiquement leurs dépendances.
+
+--- 
+
+### 2. Qu'est-ce que l'autowiring ?
+
+L'autowiring permet au conteneur de déterminer automatiquement les dépendances d'une classe grâce aux types indiqués dans son constructeur.
+Le conteneur voit que ReservationController a besoin de ReservationService. Il peut donc créer automatiquement ReservationService et l'injecter dans le contrôleur. Cela évite d'avoir à déclarer manuellement toutes les classes concrètes simples.
+
+--- 
+
+### 3. Pourquoi les interfaces nécessitent-elles une définition ?
+
+Une interface ne peut pas être instanciée directement. le conteneur ne sait pas quelle classe concrète utiliser.
+Si une classe demande ReservationRepositoryInterface, le conteneur doit lui fournir une instance de ReservationRepository.
+Les interfaces nécessitent donc une définition parce que le conteneur doit connaître l'implémentation concrète à utiliser.
+
+--- 
+
+### 4. Pourquoi limiter $container->get() au point d'entrée ?
+
+On limite $container->get() au point d'entrée afin d'éviter que toutes les classes dépendent directement du conteneur.
+Cela permet de garder les classes indépendantes du conteneur, plus faciles à comprendre, tester et maintenir.
+Le conteneur doit principalement être utilisé au niveau de l'initialisation et du point d'entrée de l'application.
+
+--- 
+
+### 5. Quel anti-pattern apparaît si toutes les classes interrogent le conteneur ?
+
+Si toutes les classes utilisent directement le conteneur pour récupérer leurs dépendances, on obtient l'anti-pattern appelé Service Locator.
+Le problème est que les dépendances de la classe sont cachées dans son code.
+Cela rend l'application :
+- plus difficile à comprendre ;
+- plus difficile à tester ;
+- plus fortement couplée au conteneur ;
+- plus difficile à maintenir.

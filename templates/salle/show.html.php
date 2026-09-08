@@ -1,39 +1,56 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <title>Détail salle</title>
-</head>
+<?php $salle = $salle ?? null; ?>
 
-<body>
+<?php if ($salle): ?>
 
-<h1>Détail de la salle</h1>
+    <h1>Détail de la salle</h1>
 
-<div>
+    <div>
 
-    <h2>Amphithéâtre A</h2>
+        <h2>
+            <?= htmlspecialchars($salle->nom) ?>
+        </h2>
 
-    <p>
-        <strong>ID :</strong> 1
-    </p>
+        <p>
+            <strong>ID :</strong>
+            <?= $salle->id ?>
+        </p>
 
-    <p>
-        <strong>Capacité :</strong> 250 places
-    </p>
+        <p>
+            <strong>Bâtiment :</strong>
+            <?= htmlspecialchars($salle->batiment) ?>
+        </p>
 
-    <p>
-        <strong>Statut :</strong> Disponible
-    </p>
+        <p>
+            <strong>Capacité :</strong>
+            <?= $salle->capacite ?> places
+        </p>
 
-    <a href="/salles/1/edit">
-        Modifier
-    </a>
+        <p>
+            <strong>Type :</strong>
+            <?= htmlspecialchars($salle->type->value) ?>
+        </p>
+
+        <p>
+            <strong>Statut :</strong>
+            <?= $salle->active ? 'Active' : 'Inactive' ?>
+        </p>
+
+        <a href="/salles/<?= $salle->id ?>/edit">
+            Modifier
+        </a>
+
+        <a href="/salles">
+            Retour aux salles
+        </a>
+
+    </div>
+
+<?php else: ?>
+
+    <h1>Salle introuvable</h1>
 
     <a href="/salles">
         Retour aux salles
     </a>
 
-</div>
-
-</body>
-</html>
+<?php endif; ?>
