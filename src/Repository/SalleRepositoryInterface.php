@@ -13,6 +13,17 @@ interface SalleRepositoryInterface
      */
     public function lister(): array;
 
+    /**
+     * @param array<string, mixed> $criteres
+     * @return Salle[]
+     */
+    public function rechercher(array $criteres = [], int $page = 1, int $parPage = 10): array;
+
+    /**
+     * @param array<string, mixed> $criteres
+     */
+    public function compter(array $criteres = []): int;
+
     public function trouver(int $id): ?Salle;
 
     public function enregistrer(CreerSalleDTO $dto): Salle;

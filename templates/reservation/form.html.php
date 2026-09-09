@@ -1,88 +1,147 @@
-<?php $salles = $salles ?? []; ?>
+<?php
+$salles = $salles ?? [];
+$errors = $errors ?? [];
+$reservation = $reservation ?? [];
 
-<h1>Créer une réservation</h1>
+$salleId = is_object($reservation) ? $reservation->salleId : ($reservation['salleId'] ?? '');
+$responsable = is_object($reservation) ? $reservation->responsable : ($reservation['responsable'] ?? '');
+$email = is_object($reservation) ? $reservation->email : ($reservation['email'] ?? '');
+$motif = is_object($reservation) ? $reservation->motif : ($reservation['motif'] ?? '');
 
-<form method="POST" action="/reservations">
+$dateDebut = '';
+if (is_object($reservation) && isset($reservation->dateDebut)) {
+    $dateDebut = $reservation->dateDebut instanceof \DateTimeInterface ? $reservation->dateDebut->format('Y-m-d\TH:i') : (string) $reservation->dateDebut;
+} elseif (is_array($reservation) && isset($reservation['dateDebut'])) {
+    $dateDebut = $reservation['dateDebut'];
+}
 
-    <div>
-        <label for="salleId">Salle</label>
+$dateFin = '';
+if (is_object($reservation) && isset($reservation->dateFin)) {
+    $dateFin = $reservation->dateFin instanceof \DateTimeInterface ? $reservation->dateFin->format('Y-m-d\TH:i') : (string) $reservation->dateFin;
+} elseif (is_array($reservation) && isset($reservation['dateFin'])) {
+    $dateFin = $reservation['dateFin'];
+}
+?>
 
-        <select name="salleId" id="salleId">
+<div class="form-card">
+    <h1>Créer une réservation</h1>
 
-            <option value="">
-                Choisir une salle
-            </option>
+    <?php if (!empty($errors)): ?>
+        <div class="alert alert-danger">
+            <strong>Veuillez corriger les erreurs ci-dessous :</strong>
+            <ul>
+                <?php foreach ($errors as $field => $errorMsg): ?>
+                    <li><?= htmlspecialchars($errorMsg) ?></li>
+                <?php endforeach; ?>
+            </ul>
+        </div>
+    <?php endif; ?>
 
-            <?php foreach ($salles as $salle): ?>
+    <form method="POST" action="/reservations">
 
-                <option
-                    value="<?= $salle->id ?>"
-                    <?= ($reservation['salleId'] ?? '') == $salle->id ? 'selected' : '' ?>
-                >
-                    <?= htmlspecialchars($salle->nom) ?>
-                    - <?= $salle->capacite ?> places
-                </option>
+        <div class="form-group">
+            <label for="salleId">Salle</label>
+            <select
+                name="salleId"
+                id="salleId"
+                class="form-control <?= !empty($errors['salleId']) ? 'is-invalid' : '' ?>"
+            >
+                <option value="">-- Choisir une salle --</option>
+                <?php foreach ($salles as $salle): ?>
+                    <option
+                        value="<?= $salle->id ?>"
+                        <?= (string) $salleId === (string) $salle->id ? 'selected' : '' ?>
+                        <?= !$salle->active ? 'disabled style="color: #9ca3af;"' : '' ?>
+                    >
+                        <?= htmlspecialchars($salle->nom) ?> (<?= $salle->capacite ?> places)
+                        <?= !$salle->active ? ' - [Inactive]' : '' ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+            <?php if (!empty($errors['salleId'])): ?>
+                <div class="field-error"><?= htmlspecialchars($errors['salleId']) ?></div>
+            <?php endif; ?>
+        </div>
 
-            <?php endforeach; ?>
+        <div class="form-group">
+            <label for="responsable">Nom du responsable</label>
+            <input
+                type="text"
+                name="responsable"
+                id="responsable"
+                class="form-control <?= !empty($errors['responsable']) ? 'is-invalid' : '' ?>"
+                value="<?= htmlspecialchars((string) $responsable) ?>"
+                placeholder="Ex : Dupont Jean"
+            >
+            <?php if (!empty($errors['responsable'])): ?>
+                <div class="field-error"><?= htmlspecialchars($errors['responsable']) ?></div>
+            <?php endif; ?>
+        </div>
 
-        </select>
-    </div>
+        <div class="form-group">
+            <label for="email">Adresse email</label>
+            <input
+                type="email"
+                name="email"
+                id="email"
+                class="form-control <?= !empty($errors['email']) ? 'is-invalid' : '' ?>"
+                value="<?= htmlspecialchars((string) $email) ?>"
+                placeholder="Ex : jean.dupont@exemple.fr"
+            >
+            <?php if (!empty($errors['email'])): ?>
+                <div class="field-error"><?= htmlspecialchars($errors['email']) ?></div>
+            <?php endif; ?>
+        </div>
 
-    <div>
-        <label for="responsable">Responsable</label>
+        <div class="form-group">
+            <label for="motif">Motif de la réservation</label>
+            <textarea
+                name="motif"
+                id="motif"
+                class="form-control <?= !empty($errors['motif']) ? 'is-invalid' : '' ?>"
+                placeholder="Ex : Réunion d'équipe projet..."
+            ><?= htmlspecialchars((string) $motif) ?></textarea>
+            <?php if (!empty($errors['motif'])): ?>
+                <div class="field-error"><?= htmlspecialchars($errors['motif']) ?></div>
+            <?php endif; ?>
+        </div>
 
-        <input
-            type="text"
-            name="responsable"
-            id="responsable"
-            value="<?= htmlspecialchars($reservation['responsable'] ?? '') ?>"
-        >
-    </div>
+        <div class="form-group">
+            <label for="dateDebut">Date et heure de début</label>
+            <input
+                type="datetime-local"
+                name="dateDebut"
+                id="dateDebut"
+                class="form-control <?= !empty($errors['dateDebut']) ? 'is-invalid' : '' ?>"
+                value="<?= htmlspecialchars((string) $dateDebut) ?>"
+            >
+            <?php if (!empty($errors['dateDebut'])): ?>
+                <div class="field-error"><?= htmlspecialchars($errors['dateDebut']) ?></div>
+            <?php endif; ?>
+        </div>
 
-    <div>
-        <label for="email">Email</label>
+        <div class="form-group">
+            <label for="dateFin">Date et heure de fin</label>
+            <input
+                type="datetime-local"
+                name="dateFin"
+                id="dateFin"
+                class="form-control <?= !empty($errors['dateFin']) ? 'is-invalid' : '' ?>"
+                value="<?= htmlspecialchars((string) $dateFin) ?>"
+            >
+            <?php if (!empty($errors['dateFin'])): ?>
+                <div class="field-error"><?= htmlspecialchars($errors['dateFin']) ?></div>
+            <?php endif; ?>
+        </div>
 
-        <input
-            type="email"
-            name="email"
-            id="email"
-            value="<?= htmlspecialchars($reservation['email'] ?? '') ?>"
-        >
-    </div>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">
+                Confirmer la réservation
+            </button>
+            <a href="/reservations" class="btn btn-secondary">
+                Annuler
+            </a>
+        </div>
 
-    <div>
-        <label for="motif">Motif</label>
-
-        <textarea
-            name="motif"
-            id="motif"
-        ><?= htmlspecialchars($reservation['motif'] ?? '') ?></textarea>
-    </div>
-
-    <div>
-        <label for="dateDebut">Date début</label>
-
-        <input
-            type="datetime-local"
-            name="dateDebut"
-            id="dateDebut"
-            value="<?= htmlspecialchars($reservation['dateDebut'] ?? '') ?>"
-        >
-    </div>
-
-    <div>
-        <label for="dateFin">Date fin</label>
-
-        <input
-            type="datetime-local"
-            name="dateFin"
-            id="dateFin"
-            value="<?= htmlspecialchars($reservation['dateFin'] ?? '') ?>"
-        >
-    </div>
-
-    <button type="submit">
-        Réserver
-    </button>
-
-</form>
+    </form>
+</div>

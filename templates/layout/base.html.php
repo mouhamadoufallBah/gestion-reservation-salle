@@ -3,111 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Gestion des salles</title>
-
-    <style>
-        * {
-            box-sizing: border-box;
-        }
-
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background: #f5f5f5;
-            color: #222;
-        }
-
-        header {
-            background: #222;
-            padding: 20px;
-        }
-
-        nav {
-            max-width: 1100px;
-            margin: auto;
-        }
-
-        nav a {
-            color: white;
-            text-decoration: none;
-            margin-right: 25px;
-        }
-
-        main {
-            max-width: 1100px;
-            margin: 40px auto;
-            padding: 0 20px;
-        }
-
-        .card {
-            background: white;
-            padding: 20px;
-            margin-top: 20px;
-            border-radius: 8px;
-        }
-
-        .btn {
-            display: inline-block;
-            padding: 10px 16px;
-            background: #222;
-            color: white;
-            text-decoration: none;
-            border-radius: 5px;
-            border: none;
-            cursor: pointer;
-        }
-
-        .btn-danger {
-            background: #c62828;
-        }
-
-        input,
-        select {
-            width: 100%;
-            max-width: 500px;
-            padding: 10px;
-            margin-top: 5px;
-            margin-bottom: 20px;
-        }
-
-        label {
-            display: block;
-            font-weight: bold;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background: white;
-            margin-top: 20px;
-        }
-
-        th,
-        td {
-            padding: 14px;
-            border-bottom: 1px solid #ddd;
-            text-align: left;
-        }
-
-        th {
-            background: #eee;
-        }
-    </style>
+    <title>Gestion des réservations de salles</title>
+    <link rel="stylesheet" href="/assets/css/style.css">
 </head>
-
 <body>
 
-<header>
-    <nav>
-        <a href="/salles">Salles</a>
-        <a href="/reservations">Réservations</a>
-    </nav>
+<header class="navbar">
+    <div class="container">
+        <h1>
+            <a href="/salles" style="color: inherit; text-decoration: none;">Gestion Réservations</a>
+        </h1>
+        <nav>
+            <a href="/salles">Salles</a>
+            <a href="/reservations">Réservations</a>
+        </nav>
+    </div>
 </header>
 
-<main>
+<main class="container">
 
-   <?= $contenu ?? $contenu = '' ?>
+    <?php if (!empty($flashMessages)): ?>
+        <div class="flash-messages">
+            <?php foreach ($flashMessages as $type => $messages): ?>
+                <?php foreach ((array) $messages as $message): ?>
+                    <div class="alert alert-<?= htmlspecialchars((string) $type) ?>">
+                        <?= htmlspecialchars((string) $message) ?>
+                    </div>
+                <?php endforeach; ?>
+            <?php endforeach; ?>
+        </div>
+    <?php endif; ?>
+
+    <?= $contenu ?? '' ?>
 
 </main>
 

@@ -1,0 +1,44 @@
+@startuml
+
+enum TypeSalleEnum {
+COURS: "cours"
+INFORMATIQUE: "informatique"
+LABORATOIRE: "laboratoire"
+AMPHITHEATRE: "amphitheatre"
+REUNION: "reunion"
+}
+
+enum StatutReservationEnum {
+CONFIRMEE: "confirmée"
+ANNULEE: "annulée"
+}
+
+class Salle {
++int id
++string nom
++string batiment
++int capacite
++string type
++bool active
++DateTime created_at
++DateTime updated_at
+}
+
+class Reservation {
++int id
++int salle_id
++string responsable
++string email
++string motif
++DateTime date_debut
++DateTime date_fin
++string statut
++DateTime created_at
++DateTime updated_at
+}
+
+Salle "1" --> "\*" Reservation : contient
+Salle ..> TypeSalleEnum : utilise
+Reservation ..> StatutReservationEnum : utilise
+
+@enduml

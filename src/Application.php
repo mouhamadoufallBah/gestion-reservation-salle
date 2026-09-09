@@ -17,48 +17,56 @@ final class Application
 
     public function run(): void
     {
-        $uri = parse_url(
-            $_SERVER['REQUEST_URI'],
-            PHP_URL_PATH
-        );
+        try {
+            $uri = parse_url(
+                $_SERVER['REQUEST_URI'] ?? '/',
+                PHP_URL_PATH
+            ) ?: '/';
 
-        $method = $_SERVER['REQUEST_METHOD'];
+            $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
-        $routeInfo = $this->dispatcher->dispatch(
-            $method,
-            $uri
-        );
+            $routeInfo = $this->dispatcher->dispatch(
+                $method,
+                $uri
+            );
 
-        switch ($routeInfo[0]) {
+            switch ($routeInfo[0]) {
 
-            case Dispatcher::NOT_FOUND:
+                case Dispatcher::NOT_FOUND:
+                    http_response_code(404);
+                    \App\View\View::getInstance()->renderView('errors/404', [
+                        'message' => 'La page demandée est introuvable.'
+                    ]);
+                    return;
 
-                http_response_code(404);
+                case Dispatcher::METHOD_NOT_ALLOWED:
+                    http_response_code(405);
+                    header(
+                        'Allow: ' . implode(', ', $routeInfo[1])
+                    );
+                    \App\View\View::getInstance()->renderView('errors/405', [
+                        'allowedMethods' => $routeInfo[1]
+                    ]);
+                    return;
 
-                require BASE_PATH . '/templates/errors/404.html.php';
-
-                return;
-
-            case Dispatcher::METHOD_NOT_ALLOWED:
-
-                http_response_code(405);
-
-                header(
-                    'Allow: ' . implode(', ', $routeInfo[1])
-                );
-
-                require BASE_PATH . '/templates/errors/405.html.php';
-
-                return;
-
-            case Dispatcher::FOUND:
-
-                $handler = $routeInfo[1];
-                $vars = $routeInfo[2];
-
-                $this->dispatch($handler, $vars);
-
-                return;
+                case Dispatcher::FOUND:
+                    $handler = $routeInfo[1];
+                    $vars = $routeInfo[2];
+                    $this->dispatch($handler, $vars);
+                    return;
+            }
+        } catch (\App\Exception\SalleIntrouvableException|\App\Exception\ReservationIntrouvableException $e) {
+            http_response_code(404);
+            \App\View\View::getInstance()->renderView('errors/404', [
+                'message' => $e->getMessage()
+            ]);
+        } catch (\Throwable $e) {
+            http_response_code(500);
+            error_log((string) $e);
+            \App\View\View::getInstance()->renderView('errors/500', [
+                'message' => 'Une erreur interne est survenue sur le serveur.',
+                'details' => $e->getMessage(),
+            ]);
         }
     }
 

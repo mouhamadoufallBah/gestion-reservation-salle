@@ -9,12 +9,19 @@ class ListerReservationsService
 {
     public function __construct(
         private ReservationRepositoryInterface $reservationRepository
-    ) {
-    }
+    ) {}
 
-    public function execute(): array
+    /**
+     * @param array<string, mixed>|null $criteres
+     * @return ReservationListeDTO[]
+     */
+    public function execute(?array $criteres = null, int $page = 1, int $parPage = 10): array
     {
-        $reservations = $this->reservationRepository->lister();
+        if ($criteres === null) {
+            $reservations = $this->reservationRepository->lister();
+        } else {
+            $reservations = $this->reservationRepository->rechercher($criteres, $page, $parPage);
+        }
 
         return array_map(
             fn ($reservation) => new ReservationListeDTO(
@@ -29,5 +36,13 @@ class ListerReservationsService
             ),
             $reservations
         );
+    }
+
+    /**
+     * @param array<string, mixed> $criteres
+     */
+    public function compter(array $criteres = []): int
+    {
+        return $this->reservationRepository->compter($criteres);
     }
 }

@@ -3,22 +3,78 @@
 namespace App\Repository;
 
 use App\DTO\CreerReservationDTO;
+use App\Exception\SalleIndisponibleException;
 use App\Model\Reservation;
 use App\Model\StatutReservationEnum;
 use Illuminate\Database\Capsule\Manager as Capsule;
-
+use Illuminate\Database\Eloquent\Builder;
 
 class ReservationRepository implements ReservationRepositoryInterface
 {
-
     public function __construct(private Capsule $capsule) {}
-    
+
     public function lister(): array
     {
         return Reservation::query()
-            ->orderBy('date_debut')
+            ->orderBy('date_debut', 'desc')
             ->get()
             ->all();
+    }
+
+    public function rechercher(array $criteres = [], int $page = 1, int $parPage = 10): array
+    {
+        $page = max(1, $page);
+        $parPage = max(1, $parPage);
+        $offset = ($page - 1) * $parPage;
+
+        return $this->buildQuery($criteres)
+            ->orderBy('date_debut', 'desc')
+            ->offset($offset)
+            ->limit($parPage)
+            ->get()
+            ->all();
+    }
+
+    public function compter(array $criteres = []): int
+    {
+        return $this->buildQuery($criteres)->count();
+    }
+
+    private function buildQuery(array $criteres): Builder
+    {
+        $query = Reservation::query();
+
+        if (!empty($criteres['salle_id'])) {
+            $query->where('salle_id', (int) $criteres['salle_id']);
+        }
+
+        if (!empty($criteres['responsable'])) {
+            $term = '%' . trim((string) $criteres['responsable']) . '%';
+            $query->where(function (Builder $sub) use ($term) {
+                $sub->where('responsable', 'LIKE', $term)
+                    ->orWhere('email', 'LIKE', $term);
+            });
+        }
+
+        if (!empty($criteres['motif'])) {
+            $term = '%' . trim((string) $criteres['motif']) . '%';
+            $query->where('motif', 'LIKE', $term);
+        }
+
+        if (!empty($criteres['date_debut'])) {
+            $query->where('date_debut', '>=', $criteres['date_debut']);
+        }
+
+        if (!empty($criteres['date_fin'])) {
+            $query->where('date_fin', '<=', $criteres['date_fin']);
+        }
+
+        if (!empty($criteres['statut'])) {
+            $statutVal = is_object($criteres['statut']) ? $criteres['statut']->value : (string) $criteres['statut'];
+            $query->where('statut', $statutVal);
+        }
+
+        return $query;
     }
 
     public function trouver(int $id): ?Reservation
@@ -33,6 +89,7 @@ class ReservationRepository implements ReservationRepositoryInterface
     ): ?Reservation {
         return Reservation::query()
             ->where('salle_id', $salleId)
+            ->where('statut', '!=', StatutReservationEnum::ANNULEE->value)
             ->where('date_debut', '<', $dateFin)
             ->where('date_fin', '>', $dateDebut)
             ->first();
@@ -40,30 +97,47 @@ class ReservationRepository implements ReservationRepositoryInterface
 
     public function enregistrer(CreerReservationDTO $dto): Reservation
     {
-        $reservation = new Reservation();
+        return $this->capsule->getConnection()->transaction(function () use ($dto) {
+            $conflit = $this->rechercherConflit(
+                $dto->salleId,
+                $dto->dateDebut,
+                $dto->dateFin
+            );
 
-        $reservation->salle_id = $dto->salleId;
-        $reservation->responsable = $dto->responsable;
-        $reservation->email = $dto->email;
-        $reservation->motif = $dto->motif;
-        $reservation->date_debut = $dto->dateDebut;
-        $reservation->date_fin = $dto->dateFin;
+            if ($conflit !== null) {
+                throw new SalleIndisponibleException(
+                    'La salle est déjà réservée sur cette période.'
+                );
+            }
 
-        $reservation->save();
+            $reservation = new Reservation();
 
-        return $reservation;
+            $reservation->salle_id = $dto->salleId;
+            $reservation->responsable = $dto->responsable;
+            $reservation->email = $dto->email;
+            $reservation->motif = $dto->motif;
+            $reservation->date_debut = $dto->dateDebut;
+            $reservation->date_fin = $dto->dateFin;
+            $reservation->statut = StatutReservationEnum::CONFIRMEE->value;
+
+            $reservation->save();
+
+            return $reservation;
+        });
     }
 
     public function annuler(int $id): bool
     {
-        $reservation = $this->trouver($id);
+        return (bool) $this->capsule->getConnection()->transaction(function () use ($id) {
+            $reservation = $this->trouver($id);
 
-        if ($reservation === null) {
-            return false;
-        }
+            if ($reservation === null) {
+                return false;
+            }
 
-        $reservation->statut = StatutReservationEnum::ANNULEE->value;
+            $reservation->statut = StatutReservationEnum::ANNULEE->value;
 
-        return $reservation->save();
+            return $reservation->save();
+        });
     }
 }

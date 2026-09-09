@@ -24,6 +24,52 @@ class FakeSalleRepository implements SalleRepositoryInterface
         return array_values($this->salles);
     }
 
+    public function rechercher(array $criteres = [], int $page = 1, int $parPage = 10): array
+    {
+        $all = $this->filtrer($criteres);
+        $offset = max(0, ($page - 1) * $parPage);
+
+        return array_slice($all, $offset, $parPage);
+    }
+
+    public function compter(array $criteres = []): int
+    {
+        return count($this->filtrer($criteres));
+    }
+
+    private function filtrer(array $criteres): array
+    {
+        $result = array_values($this->salles);
+
+        if (!empty($criteres['q'])) {
+            $q = mb_strtolower((string) $criteres['q']);
+            $result = array_filter($result, function ($s) use ($q) {
+                return str_contains(mb_strtolower($s->nom ?? ''), $q)
+                    || str_contains(mb_strtolower($s->batiment ?? ''), $q);
+            });
+        }
+
+        if (!empty($criteres['type'])) {
+            $t = is_object($criteres['type']) ? $criteres['type']->value : (string) $criteres['type'];
+            $result = array_filter($result, function ($s) use ($t) {
+                $typeVal = is_object($s->type) ? $s->type->value : (string) $s->type;
+                return $typeVal === $t;
+            });
+        }
+
+        if (isset($criteres['capacite_min']) && $criteres['capacite_min'] !== '') {
+            $min = (int) $criteres['capacite_min'];
+            $result = array_filter($result, fn($s) => ($s->capacite ?? 0) >= $min);
+        }
+
+        if (isset($criteres['statut']) && $criteres['statut'] !== '') {
+            $active = $criteres['statut'] === 'active' || $criteres['statut'] === '1';
+            $result = array_filter($result, fn($s) => (bool) ($s->active ?? false) === $active);
+        }
+
+        return array_values($result);
+    }
+
     public function trouver(int $id): ?Salle
     {
         return $this->salles[$id] ?? null;

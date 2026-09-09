@@ -8,9 +8,15 @@ use App\Repository\ReservationRepositoryInterface;
 use App\Repository\SalleRepository;
 use App\Repository\SalleRepositoryInterface;
 use App\Service\AfficherReservationService;
+use App\Service\AfficherSalleService;
 use App\Service\AnnulerReservationService;
 use App\Service\CreerReservationService;
+use App\Service\CreerSalleService;
+use App\Service\FlashService;
 use App\Service\ListerReservationsService;
+use App\Service\ListerSallesService;
+use App\Service\ModifierSalleService;
+use App\Validation\AnnulationReservationValidator;
 use App\Validation\ReservationValidator;
 use App\Validation\SalleValidator;
 use FastRoute\Dispatcher;
@@ -62,10 +68,28 @@ return [
         );
     }),
 
+    FlashService::class =>
+    autowire(),
+
     SalleValidator::class =>
     autowire(),
 
     ReservationValidator::class =>
+    autowire(),
+
+    AnnulationReservationValidator::class =>
+    autowire(),
+
+    CreerSalleService::class =>
+    autowire(),
+
+    ModifierSalleService::class =>
+    autowire(),
+
+    AfficherSalleService::class =>
+    autowire(),
+
+    ListerSallesService::class =>
     autowire(),
 
     CreerReservationService::class =>
@@ -74,16 +98,16 @@ return [
     AnnulerReservationService::class =>
     autowire(),
 
-    SalleController::class =>
-    autowire(),
-
-    ReservationController::class =>
-    autowire(),
-
     ListerReservationsService::class =>
     autowire(),
 
     AfficherReservationService::class =>
+    autowire(),
+
+    SalleController::class =>
+    autowire(),
+
+    ReservationController::class =>
     autowire(),
 
     Application::class =>

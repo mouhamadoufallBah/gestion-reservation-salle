@@ -30,12 +30,20 @@ class View
             return;
         }
 
+        if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
+            session_start();
+        }
+
+        $flashMessages = $_SESSION['flash'] ?? [];
+        unset($_SESSION['flash']);
+
+        $data['flashMessages'] = $data['flashMessages'] ?? $flashMessages;
+
         extract($data);
 
         ob_start();
 
         require $viewPath;
-
 
         $contenu = ob_get_clean();
 

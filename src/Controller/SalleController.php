@@ -4,13 +4,17 @@ namespace App\Controller;
 
 use App\DTO\CreerSalleDTO;
 use App\DTO\ModifierSalleDTO;
+use App\Exception\SalleIntrouvableException;
 use App\Model\TypeSalleEnum;
 use App\Service\AfficherSalleService;
 use App\Service\CreerSalleService;
+use App\Service\FlashService;
 use App\Service\ListerSallesService;
 use App\Service\ModifierSalleService;
 use App\Validation\SalleValidator;
+use App\DTO\PaginationDTO;
 use App\View\View;
+use Throwable;
 
 class SalleController
 {
@@ -19,26 +23,53 @@ class SalleController
         private ModifierSalleService $modifierSalleService,
         private ListerSallesService $listerSallesService,
         private AfficherSalleService $afficherSalleService,
-        private SalleValidator $validator
+        private SalleValidator $validator,
+        private FlashService $flashService
     ) {}
 
     public function index(): void
     {
-        $salles = $this->listerSallesService->execute();
+        $criteres = [
+            'q' => trim($_GET['q'] ?? ''),
+            'type' => trim($_GET['type'] ?? ''),
+            'capacite_min' => trim($_GET['capacite_min'] ?? ''),
+            'statut' => trim($_GET['statut'] ?? ''),
+        ];
+
+        $page = max(1, (int) ($_GET['page'] ?? 1));
+        $parPage = max(1, min(50, (int) ($_GET['limit'] ?? 6)));
+
+        $total = $this->listerSallesService->compter($criteres);
+        $salles = $this->listerSallesService->execute($criteres, $page, $parPage);
+
+        $pagination = new PaginationDTO(
+            page: $page,
+            parPage: $parPage,
+            total: $total,
+            queryParams: array_filter($criteres, fn($v) => $v !== '' && $v !== null)
+        );
 
         View::getInstance()->renderView('salle/index', [
-            'salles' => $salles
+            'salles' => $salles,
+            'pagination' => $pagination,
+            'criteres' => $criteres,
         ]);
     }
 
     public function show(string $id): void
     {
-        
-        $salle = $this->afficherSalleService->execute($id);
+        try {
+            $salle = $this->afficherSalleService->execute((int) $id);
 
-        View::getInstance()->renderView('salle/show', [
-            'salle' => $salle
-        ]);
+            View::getInstance()->renderView('salle/show', [
+                'salle' => $salle
+            ]);
+        } catch (SalleIntrouvableException $e) {
+            http_response_code(404);
+            View::getInstance()->renderView('errors/404', [
+                'message' => $e->getMessage()
+            ]);
+        }
     }
 
     public function create(): void
@@ -68,27 +99,43 @@ class SalleController
             return;
         }
 
-        $dto = new CreerSalleDTO(
-            nom: $data['nom'],
-            batiment: $data['batiment'],
-            capacite: (int) $data['capacite'],
-            type: TypeSalleEnum::from($data['type']),
-            active: $data['active']
-        );
+        try {
+            $dto = new CreerSalleDTO(
+                nom: trim($data['nom']),
+                batiment: trim($data['batiment']),
+                capacite: (int) $data['capacite'],
+                type: TypeSalleEnum::from($data['type']),
+                active: $data['active']
+            );
 
-        $this->creerSalleService->execute($dto);
+            $this->creerSalleService->execute($dto);
 
-        header('Location: /salles');
-        exit;
+            $this->flashService->success('La salle a été créée avec succès.');
+
+            header('Location: /salles');
+            exit;
+        } catch (Throwable $e) {
+            View::getInstance()->renderView('salle/form', [
+                'errors' => ['general' => 'Erreur lors de la création de la salle : ' . $e->getMessage()],
+                'salle' => $data
+            ]);
+        }
     }
 
     public function edit(string $id): void
     {
-        $salle = $this->afficherSalleService->execute($id);
+        try {
+            $salle = $this->afficherSalleService->execute((int) $id);
 
-        View::getInstance()->renderView('salle/form', [
-            'salle' => $salle
-        ]);
+            View::getInstance()->renderView('salle/form', [
+                'salle' => $salle
+            ]);
+        } catch (SalleIntrouvableException $e) {
+            http_response_code(404);
+            View::getInstance()->renderView('errors/404', [
+                'message' => $e->getMessage()
+            ]);
+        }
     }
 
     public function update(string $id): void
@@ -114,18 +161,35 @@ class SalleController
             return;
         }
 
-        $dto = new ModifierSalleDTO(
-            id: $id,
-            nom: $data['nom'],
-            batiment: $data['batiment'],
-            capacite: (int) $data['capacite'],
-            type: TypeSalleEnum::from($data['type']),
-            active: $data['active']
-        );
+        try {
+            $dto = new ModifierSalleDTO(
+                id: (int) $id,
+                nom: trim($data['nom']),
+                batiment: trim($data['batiment']),
+                capacite: (int) $data['capacite'],
+                type: TypeSalleEnum::from($data['type']),
+                active: $data['active']
+            );
 
-        $this->modifierSalleService->execute($dto);
+            $this->modifierSalleService->execute($dto);
 
-        header('Location: /salles/' . $id);
-        exit;
+            $this->flashService->success('La salle a été modifiée avec succès.');
+
+            header('Location: /salles/' . $id);
+            exit;
+        } catch (SalleIntrouvableException $e) {
+            http_response_code(404);
+            View::getInstance()->renderView('errors/404', [
+                'message' => $e->getMessage()
+            ]);
+        } catch (Throwable $e) {
+            View::getInstance()->renderView('salle/form', [
+                'errors' => ['general' => 'Erreur lors de la modification : ' . $e->getMessage()],
+                'salle' => array_merge(
+                    ['id' => $id],
+                    $data
+                )
+            ]);
+        }
     }
 }

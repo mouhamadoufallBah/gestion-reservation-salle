@@ -11,9 +11,17 @@ class ListerSallesService
         private SalleRepositoryInterface $salleRepository
     ) {}
 
-    public function execute(): array
+    /**
+     * @param array<string, mixed>|null $criteres
+     * @return SalleListeDTO[]
+     */
+    public function execute(?array $criteres = null, int $page = 1, int $parPage = 10): array
     {
-        $salles = $this->salleRepository->lister();
+        if ($criteres === null) {
+            $salles = $this->salleRepository->lister();
+        } else {
+            $salles = $this->salleRepository->rechercher($criteres, $page, $parPage);
+        }
 
         return array_map(
             fn($salle) => new SalleListeDTO(
@@ -26,5 +34,13 @@ class ListerSallesService
             ),
             $salles
         );
+    }
+
+    /**
+     * @param array<string, mixed> $criteres
+     */
+    public function compter(array $criteres = []): int
+    {
+        return $this->salleRepository->compter($criteres);
     }
 }
