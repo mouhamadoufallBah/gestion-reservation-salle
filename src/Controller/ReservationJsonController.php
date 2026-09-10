@@ -3,18 +3,15 @@
 namespace App\Controller;
 
 use App\DTO\CreerReservationDTO;
-use App\Exception\ReservationIntrouvableException;
-use App\Exception\SalleIndisponibleException;
+use App\DTO\PaginationDTO;
 use App\Service\AfficherReservationService;
 use App\Service\AnnulerReservationService;
 use App\Service\CreerReservationService;
 use App\Service\ListerReservationsService;
 use App\Service\ListerSallesService;
 use App\Validation\AnnulationReservationValidator;
-use App\DTO\PaginationDTO;
 use App\Validation\ReservationValidator;
 use DateTimeImmutable;
-use Throwable;
 
 class ReservationJsonController implements IReservationController
 {
@@ -27,13 +24,18 @@ class ReservationJsonController implements IReservationController
         private AfficherReservationService $afficherReservationService,
         private AnnulationReservationValidator $annulationValidator
     ) {}
-
+    
     private function jsonResponse(mixed $data, int $status = 200): void
     {
         header_remove();
         header('Content-Type: application/json; charset=utf-8');
         http_response_code($status);
-        echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+
+        echo json_encode(
+            $data,
+            JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT
+        );
+
         exit;
     }
 
@@ -52,14 +54,23 @@ class ReservationJsonController implements IReservationController
         $parPage = max(1, min(50, (int) ($_GET['limit'] ?? 6)));
 
         $salles = $this->listerSallesService->execute();
+
         $total = $this->listerReservationsService->compter($criteres);
-        $reservations = $this->listerReservationsService->execute($criteres, $page, $parPage);
+
+        $reservations = $this->listerReservationsService->execute(
+            $criteres,
+            $page,
+            $parPage
+        );
 
         $pagination = new PaginationDTO(
             page: $page,
             parPage: $parPage,
             total: $total,
-            queryParams: array_filter($criteres, fn($v) => $v !== '' && $v !== null)
+            queryParams: array_filter(
+                $criteres,
+                fn ($v) => $v !== '' && $v !== null
+            )
         );
 
         $this->jsonResponse([
@@ -69,27 +80,22 @@ class ReservationJsonController implements IReservationController
                 'salles' => $salles,
                 'pagination' => $pagination,
                 'criteres' => $criteres,
-            ]
+            ],
         ]);
     }
 
     public function show(string $id): void
     {
-        try {
-            $reservation = $this->afficherReservationService->execute((int) $id);
+        $reservation = $this->afficherReservationService->execute(
+            (int) $id
+        );
 
-            $this->jsonResponse([
-                'status' => 'success',
-                'data' => [
-                    'reservation' => $reservation
-                ]
-            ]);
-        } catch (ReservationIntrouvableException $e) {
-            $this->jsonResponse([
-                'status' => 'error',
-                'message' => $e->getMessage()
-            ], 404);
-        }
+        $this->jsonResponse([
+            'status' => 'success',
+            'data' => [
+                'reservation' => $reservation,
+            ],
+        ]);
     }
 
     public function create(): void
@@ -100,8 +106,8 @@ class ReservationJsonController implements IReservationController
             'status' => 'success',
             'message' => 'Endpoint de création de réservation. Veuillez envoyer une requête POST.',
             'data' => [
-                'salles' => $salles
-            ]
+                'salles' => $salles,
+            ],
         ]);
     }
 
@@ -118,86 +124,53 @@ class ReservationJsonController implements IReservationController
 
         $validation = $this->validator->validate($data);
 
-        if (!empty($validation->errors())) {
+        if (!$validation->isValid()) {
             $this->jsonResponse([
                 'status' => 'error',
-                'message' => 'Erreur de validation',
-                'errors' => $validation->errors()
+                'message' => 'Erreur de validation.',
+                'errors' => $validation->errors(),
             ], 422);
         }
 
-        try {
-            $dateDebut = new DateTimeImmutable($data['dateDebut']);
-            $dateFin = new DateTimeImmutable($data['dateFin']);
-        } catch (Throwable) {
-            $this->jsonResponse([
-                'status' => 'error',
-                'message' => 'Format de date invalide.',
-                'errors' => ['dateDebut' => 'Format de date invalide.']
-            ], 422);
-        }
+        $data = $validation->data();
 
         $dto = new CreerReservationDTO(
             salleId: (int) $data['salleId'],
             responsable: trim($data['responsable']),
             email: trim($data['email']),
             motif: trim($data['motif']),
-            dateDebut: $dateDebut,
-            dateFin: $dateFin
+            dateDebut: new DateTimeImmutable($data['dateDebut']),
+            dateFin: new DateTimeImmutable($data['dateFin'])
         );
 
-        try {
-            $reservationCreee = $this->creerReservationService->execute($dto);
+        $reservationCreee = $this->creerReservationService->execute($dto);
 
-            $this->jsonResponse([
-                'status' => 'success',
-                'message' => 'La réservation a été créée avec succès.',
-                'data' => $reservationCreee ?? $data
-            ], 201);
-        } catch (SalleIndisponibleException $e) {
-            $this->jsonResponse([
-                'status' => 'error',
-                'message' => $e->getMessage(),
-                'errors' => ['general' => $e->getMessage()]
-            ], 422);
-        } catch (Throwable $e) {
-            $this->jsonResponse([
-                'status' => 'error',
-                'message' => 'Erreur inattendue : ' . $e->getMessage(),
-                'errors' => ['general' => 'Erreur inattendue : ' . $e->getMessage()]
-            ], 500);
-        }
+        $this->jsonResponse([
+            'status' => 'success',
+            'message' => 'La réservation a été créée avec succès.',
+            'data' => $reservationCreee,
+        ], 201);
     }
 
     public function cancel(string $id): void
     {
-        $validation = $this->annulationValidator->validate(['id' => $id]);
+        $validation = $this->annulationValidator->validate([
+            'id' => $id,
+        ]);
 
         if (!empty($validation->errors())) {
             $this->jsonResponse([
                 'status' => 'error',
                 'message' => 'Identifiant de réservation invalide.',
-                'errors' => $validation->errors()
+                'errors' => $validation->errors(),
             ], 422);
         }
 
-        try {
-            $this->annulerReservationService->execute((int) $id);
+        $this->annulerReservationService->execute((int) $id);
 
-            $this->jsonResponse([
-                'status' => 'success',
-                'message' => 'La réservation a été annulée avec succès.'
-            ]);
-        } catch (ReservationIntrouvableException $e) {
-            $this->jsonResponse([
-                'status' => 'error',
-                'message' => $e->getMessage()
-            ], 404);
-        } catch (Throwable $e) {
-            $this->jsonResponse([
-                'status' => 'error',
-                'message' => "Erreur lors de l'annulation : " . $e->getMessage()
-            ], 500);
-        }
+        $this->jsonResponse([
+            'status' => 'success',
+            'message' => 'La réservation a été annulée avec succès.',
+        ]);
     }
 }

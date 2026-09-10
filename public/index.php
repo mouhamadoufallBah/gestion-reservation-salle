@@ -1,5 +1,6 @@
 <?php
 use App\Application;
+use App\Middleware\ExceptionMiddleware;
 use DI\ContainerBuilder;
 
 
@@ -19,5 +20,11 @@ $builder->addDefinitions(
 $container = $builder->build();
 
 $application = $container->get(Application::class);
+
+$middleware = $container->get(ExceptionMiddleware::class);
+
+$middleware->handle(
+    fn () => $application->run()
+);
 
 $application->run();

@@ -4,7 +4,6 @@ namespace App\Controller;
 
 use App\DTO\CreerSalleDTO;
 use App\DTO\ModifierSalleDTO;
-use App\Exception\SalleIntrouvableException;
 use App\Model\TypeSalleEnum;
 use App\Service\AfficherSalleService;
 use App\Service\CreerSalleService;
@@ -13,9 +12,7 @@ use App\Service\ListerSallesService;
 use App\Service\ModifierSalleService;
 use App\Validation\SalleValidator;
 use App\DTO\PaginationDTO;
-use App\DTO\PaginationDTOBuilder;
 use App\View\View;
-use Throwable;
 
 class SalleController implements ISalleController
 {
@@ -42,21 +39,22 @@ class SalleController implements ISalleController
         $parPage = max(1, min(50, (int) ($_GET['limit'] ?? 6)));
 
         $total = $this->listerSallesService->compter($criteres);
-        $salles = $this->listerSallesService->execute($criteres, $page, $parPage);
+
+        $salles = $this->listerSallesService->execute(
+            $criteres,
+            $page,
+            $parPage
+        );
 
         $pagination = new PaginationDTO(
             page: $page,
             parPage: $parPage,
             total: $total,
-            queryParams: array_filter($criteres, fn($v) => $v !== '' && $v !== null)
+            queryParams: array_filter(
+                $criteres,
+                fn ($v) => $v !== '' && $v !== null
+            )
         );
-
-        //    $pagination = new PaginationDTOBuilder();
-        //    $pagination->page($page);
-        //    $pagination->parPage($parPage);
-        //    $pagination->total($total);
-        //    $pagination->queryParams(array_filter($criteres, fn($v) => $v !== '' && $v !== null));
-        //    $pagination->build();
 
         $this->view->renderView('salle/index', [
             'salles' => $salles,
@@ -67,24 +65,17 @@ class SalleController implements ISalleController
 
     public function show(string $id): void
     {
-        try {
-            $salle = $this->afficherSalleService->execute((int) $id);
+        $salle = $this->afficherSalleService->execute((int) $id);
 
-            $this->view->renderView('salle/show', [
-                'salle' => $salle
-            ]);
-        } catch (SalleIntrouvableException $e) {
-            http_response_code(404);
-            $this->view->renderView('errors/404', [
-                'message' => $e->getMessage()
-            ]);
-        }
+        $this->view->renderView('salle/show', [
+            'salle' => $salle,
+        ]);
     }
 
     public function create(): void
     {
         $this->view->renderView('salle/form', [
-            'salle' => null
+            'salle' => null,
         ]);
     }
 
@@ -103,48 +94,37 @@ class SalleController implements ISalleController
         if (!empty($errors->errors())) {
             $this->view->renderView('salle/form', [
                 'errors' => $errors->errors(),
-                'salle' => $data
+                'salle' => $data,
             ]);
+
             return;
         }
 
-        try {
-            $dto = new CreerSalleDTO(
-                nom: trim($data['nom']),
-                batiment: trim($data['batiment']),
-                capacite: (int) $data['capacite'],
-                type: TypeSalleEnum::from($data['type']),
-                active: $data['active']
-            );
+        $dto = new CreerSalleDTO(
+            nom: trim($data['nom']),
+            batiment: trim($data['batiment']),
+            capacite: (int) $data['capacite'],
+            type: TypeSalleEnum::from($data['type']),
+            active: $data['active']
+        );
 
-            $this->creerSalleService->execute($dto);
+        $this->creerSalleService->execute($dto);
 
-            $this->flashService->success('La salle a été créée avec succès.');
+        $this->flashService->success(
+            'La salle a été créée avec succès.'
+        );
 
-            header('Location: /salles');
-            exit;
-        } catch (Throwable $e) {
-            $this->view->renderView('salle/form', [
-                'errors' => ['general' => 'Erreur lors de la création de la salle : ' . $e->getMessage()],
-                'salle' => $data
-            ]);
-        }
+        header('Location: /salles');
+        exit;
     }
 
     public function edit(string $id): void
     {
-        try {
-            $salle = $this->afficherSalleService->execute((int) $id);
+        $salle = $this->afficherSalleService->execute((int) $id);
 
-            $this->view->renderView('salle/form', [
-                'salle' => $salle
-            ]);
-        } catch (SalleIntrouvableException $e) {
-            http_response_code(404);
-            $this->view->renderView('errors/404', [
-                'message' => $e->getMessage()
-            ]);
-        }
+        $this->view->renderView('salle/form', [
+            'salle' => $salle,
+        ]);
     }
 
     public function update(string $id): void
@@ -165,40 +145,28 @@ class SalleController implements ISalleController
                 'salle' => array_merge(
                     ['id' => $id],
                     $data
-                )
+                ),
             ]);
+
             return;
         }
 
-        try {
-            $dto = new ModifierSalleDTO(
-                id: (int) $id,
-                nom: trim($data['nom']),
-                batiment: trim($data['batiment']),
-                capacite: (int) $data['capacite'],
-                type: TypeSalleEnum::from($data['type']),
-                active: $data['active']
-            );
+        $dto = new ModifierSalleDTO(
+            id: (int) $id,
+            nom: trim($data['nom']),
+            batiment: trim($data['batiment']),
+            capacite: (int) $data['capacite'],
+            type: TypeSalleEnum::from($data['type']),
+            active: $data['active']
+        );
 
-            $this->modifierSalleService->execute($dto);
+        $this->modifierSalleService->execute($dto);
 
-            $this->flashService->success('La salle a été modifiée avec succès.');
+        $this->flashService->success(
+            'La salle a été modifiée avec succès.'
+        );
 
-            header('Location: /salles/' . $id);
-            exit;
-        } catch (SalleIntrouvableException $e) {
-            http_response_code(404);
-            $this->view->renderView('errors/404', [
-                'message' => $e->getMessage()
-            ]);
-        } catch (Throwable $e) {
-            $this->view->renderView('salle/form', [
-                'errors' => ['general' => 'Erreur lors de la modification : ' . $e->getMessage()],
-                'salle' => array_merge(
-                    ['id' => $id],
-                    $data
-                )
-            ]);
-        }
+        header('Location: /salles/' . $id);
+        exit;
     }
 }
