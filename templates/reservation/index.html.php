@@ -67,24 +67,24 @@ $pagination = $pagination ?? null;
             </div>
 
             <div class="form-group" style="margin-bottom: 0;">
-                <label for="date_debut">Réservé à partir de</label>
+                <label for="dateDebut">Réservé à partir de</label>
                 <input
                     type="datetime-local"
-                    id="date_debut"
-                    name="date_debut"
+                    id="dateDebut"
+                    name="dateDebut"
                     class="form-control"
-                    value="<?= htmlspecialchars($criteres['date_debut'] ?? '') ?>"
+                    value="<?= htmlspecialchars($criteres['dateDebut'] ?? '') ?>"
                 >
             </div>
 
             <div class="form-group" style="margin-bottom: 0;">
-                <label for="date_fin">Jusqu'au</label>
+                <label for="dateFin">Jusqu'au</label>
                 <input
                     type="datetime-local"
-                    id="date_fin"
-                    name="date_fin"
+                    id="dateFin"
+                    name="dateFin"
                     class="form-control"
-                    value="<?= htmlspecialchars($criteres['date_fin'] ?? '') ?>"
+                    value="<?= htmlspecialchars($criteres['dateFin'] ?? '') ?>"
                 >
             </div>
         </div>
@@ -132,7 +132,7 @@ $pagination = $pagination ?? null;
                     ?>
                     <tr>
                         <td>#<?= $reservation->id ?></td>
-                        <td>Salle #<?= $reservation->salleId ?></td>
+                        <td>Salle <?= $reservation->nomSalle ?></td>
                         <td><strong><?= htmlspecialchars($reservation->responsable) ?></strong></td>
                         <td><?= htmlspecialchars($reservation->email) ?></td>
                         <td><?= htmlspecialchars($reservation->motif) ?></td>

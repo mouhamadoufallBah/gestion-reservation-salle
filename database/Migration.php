@@ -35,8 +35,8 @@ class Migration
             $table->string('email');
             $table->string('motif');
 
-            $table->dateTime('date_debut');
-            $table->dateTime('date_fin');
+            $table->dateTime('dateDebut');
+            $table->dateTime('dateFin');
 
             $table->string('statut')->default('confirmée');
 

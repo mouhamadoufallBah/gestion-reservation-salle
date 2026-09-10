@@ -13,11 +13,9 @@ use App\Service\ListerSallesService;
 use App\Service\ModifierSalleService;
 use App\Validation\SalleValidator;
 use App\DTO\PaginationDTO;
-use App\DTO\PaginationDTOBuilder;
-use App\View\View;
 use Throwable;
 
-class SalleController implements ISalleController
+class SalleJsonController implements ISalleController
 {
     public function __construct(
         private CreerSalleService $creerSalleService,
@@ -25,9 +23,16 @@ class SalleController implements ISalleController
         private ListerSallesService $listerSallesService,
         private AfficherSalleService $afficherSalleService,
         private SalleValidator $validator,
-        private FlashService $flashService,
-        private View $view
     ) {}
+
+    private function jsonResponse(mixed $data, int $status = 200): void
+    {
+        header_remove();
+        header('Content-Type: application/json; charset=utf-8');
+        http_response_code($status);
+        echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+        exit;
+    }
 
     public function index(): void
     {
@@ -51,17 +56,13 @@ class SalleController implements ISalleController
             queryParams: array_filter($criteres, fn($v) => $v !== '' && $v !== null)
         );
 
-        //    $pagination = new PaginationDTOBuilder();
-        //    $pagination->page($page);
-        //    $pagination->parPage($parPage);
-        //    $pagination->total($total);
-        //    $pagination->queryParams(array_filter($criteres, fn($v) => $v !== '' && $v !== null));
-        //    $pagination->build();
-
-        $this->view->renderView('salle/index', [
-            'salles' => $salles,
-            'pagination' => $pagination,
-            'criteres' => $criteres,
+        $this->jsonResponse([
+            'status' => 'success',
+            'data' => [
+                'salles' => $salles,
+                'pagination' => $pagination,
+                'criteres' => $criteres,
+            ]
         ]);
     }
 
@@ -70,21 +71,26 @@ class SalleController implements ISalleController
         try {
             $salle = $this->afficherSalleService->execute((int) $id);
 
-            $this->view->renderView('salle/show', [
-                'salle' => $salle
+            $this->jsonResponse([
+                'status' => 'success',
+                'data' => [
+                    'salle' => $salle
+                ]
             ]);
         } catch (SalleIntrouvableException $e) {
-            http_response_code(404);
-            $this->view->renderView('errors/404', [
+            $this->jsonResponse([
+                'status' => 'error',
                 'message' => $e->getMessage()
-            ]);
+            ], 404);
         }
     }
 
     public function create(): void
     {
-        $this->view->renderView('salle/form', [
-            'salle' => null
+        // En API pure, create renvoie généralement les métadonnées ou les structures attendues
+        $this->jsonResponse([
+            'status' => 'success',
+            'message' => 'Endpoint de création. Veuillez envoyer une requête POST avec les champs requis (nom, batiment, capacite, type, active).'
         ]);
     }
 
@@ -101,11 +107,11 @@ class SalleController implements ISalleController
         $errors = $this->validator->validate($data);
 
         if (!empty($errors->errors())) {
-            $this->view->renderView('salle/form', [
-                'errors' => $errors->errors(),
-                'salle' => $data
-            ]);
-            return;
+            $this->jsonResponse([
+                'status' => 'error',
+                'message' => 'Erreur de validation',
+                'errors' => $errors->errors()
+            ], 422);
         }
 
         try {
@@ -117,33 +123,39 @@ class SalleController implements ISalleController
                 active: $data['active']
             );
 
-            $this->creerSalleService->execute($dto);
+            $salleCreee = $this->creerSalleService->execute($dto);
 
-            $this->flashService->success('La salle a été créée avec succès.');
+            $this->jsonResponse([
+                'status' => 'success',
+                'message' => 'La salle a été créée avec succès.',
+                'data' => $salleCreee
+            ], 201);
 
-            header('Location: /salles');
-            exit;
         } catch (Throwable $e) {
-            $this->view->renderView('salle/form', [
-                'errors' => ['general' => 'Erreur lors de la création de la salle : ' . $e->getMessage()],
-                'salle' => $data
-            ]);
+            $this->jsonResponse([
+                'status' => 'error',
+                'message' => 'Erreur lors de la création de la salle : ' . $e->getMessage()
+            ], 500);
         }
     }
 
     public function edit(string $id): void
     {
+        // En API, l'édition équivaut souvent à récupérer la ressource existante pour l'afficher dans un formulaire front
         try {
             $salle = $this->afficherSalleService->execute((int) $id);
 
-            $this->view->renderView('salle/form', [
-                'salle' => $salle
+            $this->jsonResponse([
+                'status' => 'success',
+                'data' => [
+                    'salle' => $salle
+                ]
             ]);
         } catch (SalleIntrouvableException $e) {
-            http_response_code(404);
-            $this->view->renderView('errors/404', [
+            $this->jsonResponse([
+                'status' => 'error',
                 'message' => $e->getMessage()
-            ]);
+            ], 404);
         }
     }
 
@@ -160,14 +172,11 @@ class SalleController implements ISalleController
         $errors = $this->validator->validate($data);
 
         if (!empty($errors->errors())) {
-            $this->view->renderView('salle/form', [
-                'errors' => $errors->errors(),
-                'salle' => array_merge(
-                    ['id' => $id],
-                    $data
-                )
-            ]);
-            return;
+            $this->jsonResponse([
+                'status' => 'error',
+                'message' => 'Erreur de validation',
+                'errors' => $errors->errors()
+            ], 422);
         }
 
         try {
@@ -182,23 +191,21 @@ class SalleController implements ISalleController
 
             $this->modifierSalleService->execute($dto);
 
-            $this->flashService->success('La salle a été modifiée avec succès.');
+            $this->jsonResponse([
+                'status' => 'success',
+                'message' => 'La salle a été modifiée avec succès.'
+            ]);
 
-            header('Location: /salles/' . $id);
-            exit;
         } catch (SalleIntrouvableException $e) {
-            http_response_code(404);
-            $this->view->renderView('errors/404', [
+            $this->jsonResponse([
+                'status' => 'error',
                 'message' => $e->getMessage()
-            ]);
+            ], 404);
         } catch (Throwable $e) {
-            $this->view->renderView('salle/form', [
-                'errors' => ['general' => 'Erreur lors de la modification : ' . $e->getMessage()],
-                'salle' => array_merge(
-                    ['id' => $id],
-                    $data
-                )
-            ]);
+            $this->jsonResponse([
+                'status' => 'error',
+                'message' => 'Erreur lors de la modification : ' . $e->getMessage()
+            ], 500);
         }
     }
 }

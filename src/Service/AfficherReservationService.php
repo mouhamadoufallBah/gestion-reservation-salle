@@ -29,8 +29,8 @@ class AfficherReservationService
             responsable: $reservation->responsable,
             email: $reservation->email,
             motif: $reservation->motif,
-            dateDebut: $reservation->date_debut,
-            dateFin: $reservation->date_fin,
+            dateDebut: $reservation->dateDebut,
+            dateFin: $reservation->dateFin,
             statut: $reservation->statut,
         );
     }

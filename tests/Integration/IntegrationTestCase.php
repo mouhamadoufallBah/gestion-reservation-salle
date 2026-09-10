@@ -70,9 +70,9 @@ abstract class IntegrationTestCase extends TestCase
 
             $table->string('motif');
 
-            $table->dateTime('date_debut');
+            $table->dateTime('dateDebut');
 
-            $table->dateTime('date_fin');
+            $table->dateTime('dateFin');
             
             $table->string('statut')->default('confirmée');;
 

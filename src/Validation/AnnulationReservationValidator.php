@@ -2,35 +2,21 @@
 
 namespace App\Validation;
 
-class AnnulationReservationValidator
+use Respect\Validation\Validator as v;
+
+class AnnulationReservationValidator implements ValidatorInterface
 {
-    private array $errors = [];
-
-    public function validate(array $data): self
+    public function validate(array $data): ValidationResult
     {
-        $this->errors = [];
+        $errors = [];
 
-        if (!isset($data['id']) || $data['id'] === '') {
-            $this->errors['id'] = "L'identifiant de la réservation est obligatoire.";
-
-            return $this;
+        if (
+            !isset($data['id']) ||
+            !v::intVal()->positive()->validate($data['id'])
+        ) {
+            $errors['id'] = "L'identifiant de la réservation doit être un entier positif.";
         }
 
-        if (filter_var($data['id'], FILTER_VALIDATE_INT) === false) {
-            $this->errors['id'] = "L'identifiant de la réservation doit être un entier.";
-
-            return $this;
-        }
-
-        if ((int) $data['id'] <= 0) {
-            $this->errors['id'] = "L'identifiant de la réservation doit être supérieur à 0.";
-        }
-
-        return $this;
-    }
-
-    public function errors(): array
-    {
-        return $this->errors;
+        return new ValidationResult($data, $errors);
     }
 }

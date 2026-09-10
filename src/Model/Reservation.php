@@ -11,14 +11,14 @@ class Reservation extends Model
         'responsable',
         'email',
         'motif',
-        'date_debut',
-        'date_fin',
+        'dateDebut',
+        'dateFin',
         'statut'
     ];
 
     protected $casts = [
-        'date_debut' => 'immutable_datetime',
-        'date_fin' => 'immutable_datetime',
+        'dateDebut' => 'immutable_datetime',
+        'dateFin' => 'immutable_datetime',
         'statut' => StatutReservationEnum::class
     ];
     public function salle()

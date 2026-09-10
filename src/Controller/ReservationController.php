@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\DTO\CreerReservationDTO;
+use App\DTO\CreerReservationDTOBuilder;
 use App\Exception\ReservationIntrouvableException;
 use App\Exception\SalleIndisponibleException;
 use App\Service\AfficherReservationService;
@@ -16,9 +17,9 @@ use App\DTO\PaginationDTO;
 use App\Validation\ReservationValidator;
 use App\View\View;
 use DateTimeImmutable;
-use Throwable;
 
-class ReservationController
+
+class ReservationController implements IReservationController
 {
     public function __construct(
         private CreerReservationService $creerReservationService,
@@ -29,6 +30,7 @@ class ReservationController
         private AfficherReservationService $afficherReservationService,
         private AnnulationReservationValidator $annulationValidator,
         private FlashService $flashService,
+        private View $view
     ) {}
 
     public function index(): void
@@ -37,8 +39,8 @@ class ReservationController
             'salle_id' => trim($_GET['salle_id'] ?? ''),
             'responsable' => trim($_GET['responsable'] ?? ''),
             'motif' => trim($_GET['motif'] ?? ''),
-            'date_debut' => trim($_GET['date_debut'] ?? ''),
-            'date_fin' => trim($_GET['date_fin'] ?? ''),
+            'dateDebut' => trim($_GET['dateDebut'] ?? ''),
+            'dateFin' => trim($_GET['dateFin'] ?? ''),
             'statut' => trim($_GET['statut'] ?? ''),
         ];
 
@@ -56,7 +58,7 @@ class ReservationController
             queryParams: array_filter($criteres, fn($v) => $v !== '' && $v !== null)
         );
 
-        View::getInstance()->renderView('reservation/index', [
+        $this->view->renderView('reservation/index', [
             'reservations' => $reservations,
             'salles' => $salles,
             'pagination' => $pagination,
@@ -69,12 +71,12 @@ class ReservationController
         try {
             $reservation = $this->afficherReservationService->execute((int) $id);
 
-            View::getInstance()->renderView('reservation/show', [
+            $this->view->renderView('reservation/show', [
                 'reservation' => $reservation
             ]);
         } catch (ReservationIntrouvableException $e) {
             http_response_code(404);
-            View::getInstance()->renderView('errors/404', [
+            $this->view->renderView('errors/404', [
                 'message' => $e->getMessage()
             ]);
         }
@@ -84,7 +86,7 @@ class ReservationController
     {
         $salles = $this->listerSallesService->execute();
 
-        View::getInstance()->renderView('reservation/form', [
+        $this->view->renderView('reservation/form', [
             'salles' => $salles,
             'reservation' => null,
             'errors' => []
@@ -104,60 +106,56 @@ class ReservationController
 
         $validation = $this->validator->validate($data);
 
-        if (!empty($validation->errors())) {
+        if (!$validation->isValid()) {
             $salles = $this->listerSallesService->execute();
-            View::getInstance()->renderView('reservation/form', [
+
+            $this->view->renderView('reservation/form', [
                 'salles' => $salles,
                 'errors' => $validation->errors(),
                 'reservation' => $data,
             ]);
+
             return;
         }
 
         try {
-            $dateDebut = new DateTimeImmutable($data['dateDebut']);
-            $dateFin = new DateTimeImmutable($data['dateFin']);
-        } catch (Throwable) {
-            $salles = $this->listerSallesService->execute();
-            View::getInstance()->renderView('reservation/form', [
-                'salles' => $salles,
-                'errors' => ['dateDebut' => 'Format de date invalide.'],
-                'reservation' => $data,
-            ]);
-            return;
-        }
+            $builder = new CreerReservationDTOBuilder();
 
-        $dto = new CreerReservationDTO(
-            salleId: (int) $data['salleId'],
-            responsable: trim($data['responsable']),
-            email: trim($data['email']),
-            motif: trim($data['motif']),
-            dateDebut: $dateDebut,
-            dateFin: $dateFin
-        );
+            $dto = $builder
+                ->fromArray($validation->data())
+                ->build();
 
-        try {
             $this->creerReservationService->execute($dto);
 
-            $this->flashService->success('La réservation a été créée avec succès.');
+            $this->flashService->success(
+                'La réservation a été créée avec succès.'
+            );
 
             header('Location: /reservations');
             exit;
         } catch (SalleIndisponibleException $e) {
             $salles = $this->listerSallesService->execute();
-            View::getInstance()->renderView('reservation/form', [
+
+            $this->view->renderView('reservation/form', [
                 'salles' => $salles,
-                'errors' => ['general' => $e->getMessage()],
+                'errors' => [
+                    'general' => $e->getMessage(),
+                ],
                 'reservation' => $data,
             ]);
+
             return;
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             $salles = $this->listerSallesService->execute();
-            View::getInstance()->renderView('reservation/form', [
+
+            $this->view->renderView('reservation/form', [
                 'salles' => $salles,
-                'errors' => ['general' => 'Erreur inattendue : ' . $e->getMessage()],
+                'errors' => [
+                    'general' => 'Erreur inattendue : ' . $e->getMessage(),
+                ],
                 'reservation' => $data,
             ]);
+
             return;
         }
     }
@@ -177,7 +175,7 @@ class ReservationController
             $this->flashService->success('La réservation a été annulée avec succès.');
         } catch (ReservationIntrouvableException $e) {
             $this->flashService->error($e->getMessage());
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             $this->flashService->error("Erreur lors de l'annulation : " . $e->getMessage());
         }
 

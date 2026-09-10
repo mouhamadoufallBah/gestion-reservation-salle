@@ -12,6 +12,16 @@ class CreerSalleDTO
         public readonly int $capacite,
         public readonly TypeSalleEnum $type,
         public readonly bool $active,
-    ) {
+    ) {}
+
+    public static function fromArray(array $data): self
+    {
+        return new self(
+            $data['nom'],
+            $data['batiment'],
+            $data['capacite'],
+            $data['type'],
+            $data['active']
+        );
     }
 }

@@ -69,8 +69,8 @@ class Seed
                 'responsable' => 'Mouhamadou Bah',
                 'email' => 'mouhamadou@example.com',
                 'motif' => 'Cours de programmation PHP',
-                'date_debut' => '2026-09-10 08:00:00',
-                'date_fin' => '2026-09-10 12:00:00',
+                'dateDebut' => '2026-09-10 08:00:00',
+                'dateFin' => '2026-09-10 12:00:00',
                 'statut' => 'annulée',
             ],
             [
@@ -78,8 +78,8 @@ class Seed
                 'responsable' => 'Aminata Diop',
                 'email' => 'aminata@example.com',
                 'motif' => 'Réunion pédagogique',
-                'date_debut' => '2026-09-11 09:00:00',
-                'date_fin' => '2026-09-11 11:00:00',
+                'dateDebut' => '2026-09-11 09:00:00',
+                'dateFin' => '2026-09-11 11:00:00',
                 'statut' => 'confirmée',
             ],
             [
@@ -87,8 +87,8 @@ class Seed
                 'responsable' => 'Ibrahima Fall',
                 'email' => 'ibrahima@example.com',
                 'motif' => 'Travaux pratiques de chimie',
-                'date_debut' => '2026-09-12 14:00:00',
-                'date_fin' => '2026-09-12 17:00:00',
+                'dateDebut' => '2026-09-12 14:00:00',
+                'dateFin' => '2026-09-12 17:00:00',
                 'statut' => 'confirmée',
             ],
         ];
@@ -99,7 +99,7 @@ class Seed
             Manager::table('reservations')->updateOrInsert(
                 [
                     'salle_id' => $reservation['salle_id'],
-                    'date_debut' => $reservation['date_debut'],
+                    'dateDebut' => $reservation['dateDebut'],
                 ],
                 array_merge($reservation, [
                     'updated_at' => $now,

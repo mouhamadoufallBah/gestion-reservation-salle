@@ -16,7 +16,7 @@ et ce projet adhère à la spécification [Semantic Versioning](https://semver.o
   - Styles CSS personnalisés pour les composants de pagination (`.pagination`, `.pagination-item`, `.pagination-info`).
 - **Recherche multicritère** :
   - Filtrage des salles par mot-clé (nom ou bâtiment), type de salle, capacité minimale et statut (active/inactive).
-  - Filtrage des réservations par salle, responsable/email, motif, intervalle de dates (`date_debut`, `date_fin`) et statut (`confirmée`, `annulée`).
+  - Filtrage des réservations par salle, responsable/email, motif, intervalle de dates (`dateDebut`, `dateFin`) et statut (`confirmée`, `annulée`).
   - Formulaire de recherche stylisé avec conservation des filtres et bouton de réinitialisation.
 - **Transactions de base de données (ACID)** :
   - Encapsulation des opérations de réservation et d'annulation dans des transactions Eloquent (`Capsule::getConnection()->transaction(...)`).

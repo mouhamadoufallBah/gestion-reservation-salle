@@ -1,8 +1,12 @@
 <?php
 
 use App\Application;
+use App\Controller\IReservationController;
+use App\Controller\ISalleController;
 use App\Controller\ReservationController;
+use App\Controller\ReservationJsonController;
 use App\Controller\SalleController;
+use App\Controller\SalleJsonController;
 use App\Repository\ReservationRepository;
 use App\Repository\ReservationRepositoryInterface;
 use App\Repository\SalleRepository;
@@ -19,12 +23,31 @@ use App\Service\ModifierSalleService;
 use App\Validation\AnnulationReservationValidator;
 use App\Validation\ReservationValidator;
 use App\Validation\SalleValidator;
+use App\Validation\ValidationFactory;
+use App\Validation\ValidatorInterface;
+use App\View\View;
 use FastRoute\Dispatcher;
 use Illuminate\Database\Capsule\Manager as Capsule;
+use Psr\Container\ContainerInterface;
 
 use function DI\autowire;
 use function DI\factory;
 use function FastRoute\simpleDispatcher;
+
+$viewFormat = strtolower(trim($_ENV['VIEW_FORMAT'] ?? $_SERVER['VIEW_FORMAT'] ?? getenv('VIEW_FORMAT') ?? 'html'));
+
+$salleControllers = [
+    'html'  => SalleController::class,
+    'json'  => SalleJsonController::class,
+];
+
+$reservationControllers = [
+    'html'  => ReservationController::class,
+    'json'  => ReservationJsonController::class,
+];
+
+$selectedClasseController = $salleControllers[$viewFormat] ?? $salleControllers['html'];
+$selectedReservationController = $reservationControllers[$viewFormat] ?? $reservationControllers['html'];
 
 return [
     SalleRepositoryInterface::class =>
@@ -53,11 +76,11 @@ return [
         $capsule->setAsGlobal();
         $capsule->bootEloquent();
 
-
-        // var_dump('CAPSULE INITIALISE');
-        // die;
-
         return $capsule;
+    }),
+
+    View::class => factory(function (ContainerInterface $container) {
+        return View::getInstance();
     }),
 
     Dispatcher::class =>
@@ -71,8 +94,12 @@ return [
     FlashService::class =>
     autowire(),
 
-    SalleValidator::class =>
-    autowire(),
+    // ValidatorInterface::class => factory(function (ContainerInterface $container) {
+    //     $validator = new ValidationFactory();
+    //     $validator->create('Reservation');
+    // }),
+
+    
 
     ReservationValidator::class =>
     autowire(),
@@ -104,11 +131,9 @@ return [
     AfficherReservationService::class =>
     autowire(),
 
-    SalleController::class =>
-    autowire(),
+    ISalleController::class => autowire($selectedClasseController),
 
-    ReservationController::class =>
-    autowire(),
+    IReservationController::class => autowire($selectedReservationController),
 
     Application::class =>
     autowire(),

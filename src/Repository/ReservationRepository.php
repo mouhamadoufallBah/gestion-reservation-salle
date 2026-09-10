@@ -11,12 +11,12 @@ use Illuminate\Database\Eloquent\Builder;
 
 class ReservationRepository implements ReservationRepositoryInterface
 {
-    public function __construct(private Capsule $capsule) {}
+    public function __construct(Capsule $capsule) {}
 
     public function lister(): array
     {
         return Reservation::query()
-            ->orderBy('date_debut', 'desc')
+            ->orderBy('dateDebut', 'desc')
             ->get()
             ->all();
     }
@@ -28,7 +28,7 @@ class ReservationRepository implements ReservationRepositoryInterface
         $offset = ($page - 1) * $parPage;
 
         return $this->buildQuery($criteres)
-            ->orderBy('date_debut', 'desc')
+            ->orderBy('dateDebut', 'desc')
             ->offset($offset)
             ->limit($parPage)
             ->get()
@@ -61,8 +61,8 @@ class ReservationRepository implements ReservationRepositoryInterface
             $query->where('motif', 'LIKE', $term);
         }
 
-        if (!empty($criteres['date_debut'])) {
-            $query->where('date_debut', '>=', $criteres['date_debut']);
+        if (!empty($criteres['dateDebut'])) {
+            $query->where('dateDebut', '>=', $criteres['dateDebut']);
         }
 
         if (!empty($criteres['date_fin'])) {
@@ -90,14 +90,15 @@ class ReservationRepository implements ReservationRepositoryInterface
         return Reservation::query()
             ->where('salle_id', $salleId)
             ->where('statut', '!=', StatutReservationEnum::ANNULEE->value)
-            ->where('date_debut', '<', $dateFin)
+            ->where('dateDebut', '<', $dateFin)
             ->where('date_fin', '>', $dateDebut)
             ->first();
     }
 
     public function enregistrer(CreerReservationDTO $dto): Reservation
     {
-        return $this->capsule->getConnection()->transaction(function () use ($dto) {
+        $reservation = new Reservation();
+        return $reservation::resolveConnection()->transaction(function () use ($dto) {
             $conflit = $this->rechercherConflit(
                 $dto->salleId,
                 $dto->dateDebut,
@@ -116,7 +117,7 @@ class ReservationRepository implements ReservationRepositoryInterface
             $reservation->responsable = $dto->responsable;
             $reservation->email = $dto->email;
             $reservation->motif = $dto->motif;
-            $reservation->date_debut = $dto->dateDebut;
+            $reservation->dateDebut = $dto->dateDebut;
             $reservation->date_fin = $dto->dateFin;
             $reservation->statut = StatutReservationEnum::CONFIRMEE->value;
 
@@ -128,7 +129,8 @@ class ReservationRepository implements ReservationRepositoryInterface
 
     public function annuler(int $id): bool
     {
-        return (bool) $this->capsule->getConnection()->transaction(function () use ($id) {
+        $reservation = new Reservation();
+        return (bool) $reservation::resolveConnection()->transaction(function () use ($id) {
             $reservation = $this->trouver($id);
 
             if ($reservation === null) {

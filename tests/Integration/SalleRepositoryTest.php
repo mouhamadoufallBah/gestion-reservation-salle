@@ -200,8 +200,8 @@ class SalleRepositoryTest extends IntegrationTestCase
             'responsable' => 'Mouhamadou',
             'email' => 'test@example.com',
             'motif' => 'Réunion',
-            'date_debut' => new \DateTimeImmutable('+1 day 10:00'),
-            'date_fin' => new \DateTimeImmutable('+1 day 12:00'),
+            'dateDebut' => new \DateTimeImmutable('+1 day 10:00'),
+            'dateFin' => new \DateTimeImmutable('+1 day 12:00'),
             'statut' => 'confirmée',
         ]);
 

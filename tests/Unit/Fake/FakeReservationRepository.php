@@ -83,8 +83,8 @@ class FakeReservationRepository implements ReservationRepositoryInterface
         $reservation->responsable = $dto->responsable;
         $reservation->email = $dto->email;
         $reservation->motif = $dto->motif;
-        $reservation->date_debut = $dto->dateDebut;
-        $reservation->date_fin = $dto->dateFin;
+        $reservation->dateDebut = $dto->dateDebut;
+        $reservation->dateFin = $dto->dateFin;
 
         $this->reservations[] = $reservation;
 

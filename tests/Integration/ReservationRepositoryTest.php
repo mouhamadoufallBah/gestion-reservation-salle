@@ -98,8 +98,8 @@ class ReservationRepositoryTest extends IntegrationTestCase
             'responsable' => 'Mouhamadou',
             'email' => 'test@example.com',
             'motif' => 'Réunion',
-            'date_debut' => new \DateTimeImmutable('+1 day 10:00'),
-            'date_fin' => new \DateTimeImmutable('+1 day 12:00'),
+            'dateDebut' => new \DateTimeImmutable('+1 day 10:00'),
+            'dateFin' => new \DateTimeImmutable('+1 day 12:00'),
             'statut' => StatutReservationEnum::CONFIRMEE->value,
         ]);
 
@@ -127,8 +127,8 @@ class ReservationRepositoryTest extends IntegrationTestCase
             'responsable' => 'Mouhamadou',
             'email' => 'test1@example.com',
             'motif' => 'Réunion 1',
-            'date_debut' => new \DateTimeImmutable('+1 day 10:00'),
-            'date_fin' => new \DateTimeImmutable('+1 day 12:00'),
+            'dateDebut' => new \DateTimeImmutable('+1 day 10:00'),
+            'dateFin' => new \DateTimeImmutable('+1 day 12:00'),
             'statut' => StatutReservationEnum::CONFIRMEE->value,
         ]);
 
@@ -137,8 +137,8 @@ class ReservationRepositoryTest extends IntegrationTestCase
             'responsable' => 'Ali',
             'email' => 'test2@example.com',
             'motif' => 'Réunion 2',
-            'date_debut' => new \DateTimeImmutable('+2 day 10:00'),
-            'date_fin' => new \DateTimeImmutable('+2 day 12:00'),
+            'dateDebut' => new \DateTimeImmutable('+2 day 10:00'),
+            'dateFin' => new \DateTimeImmutable('+2 day 12:00'),
             'statut' => StatutReservationEnum::CONFIRMEE->value,
         ]);
 
@@ -164,8 +164,8 @@ class ReservationRepositoryTest extends IntegrationTestCase
             'responsable' => 'Mouhamadou',
             'email' => 'test@example.com',
             'motif' => 'Réunion',
-            'date_debut' => new \DateTimeImmutable('+1 day 10:00'),
-            'date_fin' => new \DateTimeImmutable('+1 day 12:00'),
+            'dateDebut' => new \DateTimeImmutable('+1 day 10:00'),
+            'dateFin' => new \DateTimeImmutable('+1 day 12:00'),
             'statut' => StatutReservationEnum::CONFIRMEE->value,
         ]);
 
@@ -195,8 +195,8 @@ class ReservationRepositoryTest extends IntegrationTestCase
             'responsable' => 'Mouhamadou',
             'email' => 'test@example.com',
             'motif' => 'Réunion',
-            'date_debut' => new \DateTimeImmutable('+1 day 10:00'),
-            'date_fin' => new \DateTimeImmutable('+1 day 12:00'),
+            'dateDebut' => new \DateTimeImmutable('+1 day 10:00'),
+            'dateFin' => new \DateTimeImmutable('+1 day 12:00'),
             'statut' => StatutReservationEnum::CONFIRMEE->value,
         ]);
 
@@ -220,8 +220,8 @@ class ReservationRepositoryTest extends IntegrationTestCase
             'responsable' => 'Mouhamadou',
             'email' => 'test@example.com',
             'motif' => 'Réunion',
-            'date_debut' => new \DateTimeImmutable('+1 day 10:00'),
-            'date_fin' => new \DateTimeImmutable('+1 day 12:00'),
+            'dateDebut' => new \DateTimeImmutable('+1 day 10:00'),
+            'dateFin' => new \DateTimeImmutable('+1 day 12:00'),
             'statut' => StatutReservationEnum::CONFIRMEE->value,
         ]);
 
@@ -259,8 +259,8 @@ class ReservationRepositoryTest extends IntegrationTestCase
             'responsable' => 'Mouhamadou',
             'email' => 'test@example.com',
             'motif' => 'Réunion',
-            'date_debut' => new \DateTimeImmutable('+1 day 10:00'),
-            'date_fin' => new \DateTimeImmutable('+1 day 12:00'),
+            'dateDebut' => new \DateTimeImmutable('+1 day 10:00'),
+            'dateFin' => new \DateTimeImmutable('+1 day 12:00'),
             'statut' => StatutReservationEnum::CONFIRMEE->value,
         ]);
 

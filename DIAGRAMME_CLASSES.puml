@@ -30,14 +30,14 @@ class Reservation {
 +string responsable
 +string email
 +string motif
-+DateTime date_debut
-+DateTime date_fin
++DateTime dateDebut
++DateTime dateFin
 +string statut
 +DateTime created_at
 +DateTime updated_at
 }
 
-Salle "1" --> "\*" Reservation : contient
+Salle "1" --> "*" Reservation : contient
 Salle ..> TypeSalleEnum : utilise
 Reservation ..> StatutReservationEnum : utilise
 
