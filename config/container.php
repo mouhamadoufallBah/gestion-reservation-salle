@@ -22,6 +22,7 @@ use App\Service\ListerReservationsService;
 use App\Service\ListerSallesService;
 use App\Service\ModifierSalleService;
 use App\Middleware\ExceptionMiddleware;
+use App\Service\SessionManager;
 use App\Validation\AnnulationReservationValidator;
 use App\Validation\ReservationValidator;
 use App\Validation\SalleValidator;
@@ -91,16 +92,17 @@ return [
         return $capsule;
     }),
 
-    View::class =>
-    factory(function (ContainerInterface $container) {
-        return View::getInstance();
-    }),
+    SessionManager::class => autowire(),
+    View::class => autowire(),
 
-    ExceptionHandler::class => factory(function () use ($viewFormat): ExceptionHandler {
-        return new ExceptionHandler(
-            viewFormat: $viewFormat
-        );
-    }),
+    ExceptionHandler::class => factory(
+        function (ContainerInterface $container) use ($viewFormat): ExceptionHandler {
+            return new ExceptionHandler(
+                viewFormat: $viewFormat,
+                view: $container->get(View::class)
+            );
+        }
+    ),
 
     ExceptionMiddleware::class =>
     autowire(),

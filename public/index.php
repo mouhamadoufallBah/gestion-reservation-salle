@@ -26,5 +26,3 @@ $middleware = $container->get(ExceptionMiddleware::class);
 $middleware->handle(
     fn () => $application->run()
 );
-
-$application->run();

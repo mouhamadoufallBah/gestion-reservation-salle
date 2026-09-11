@@ -65,8 +65,8 @@ class ReservationRepository implements ReservationRepositoryInterface
             $query->where('dateDebut', '>=', $criteres['dateDebut']);
         }
 
-        if (!empty($criteres['date_fin'])) {
-            $query->where('date_fin', '<=', $criteres['date_fin']);
+        if (!empty($criteres['dateFin'])) {
+            $query->where('dateFin', '<=', $criteres['dateFin']);
         }
 
         if (!empty($criteres['statut'])) {
@@ -91,7 +91,7 @@ class ReservationRepository implements ReservationRepositoryInterface
             ->where('salle_id', $salleId)
             ->where('statut', '!=', StatutReservationEnum::ANNULEE->value)
             ->where('dateDebut', '<', $dateFin)
-            ->where('date_fin', '>', $dateDebut)
+            ->where('dateFin', '>', $dateDebut)
             ->first();
     }
 
@@ -118,7 +118,7 @@ class ReservationRepository implements ReservationRepositoryInterface
             $reservation->email = $dto->email;
             $reservation->motif = $dto->motif;
             $reservation->dateDebut = $dto->dateDebut;
-            $reservation->date_fin = $dto->dateFin;
+            $reservation->dateFin = $dto->dateFin;
             $reservation->statut = StatutReservationEnum::CONFIRMEE->value;
 
             $reservation->save();

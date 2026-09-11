@@ -8,7 +8,7 @@ use Throwable;
 class ExceptionHandler
 {
     public function __construct(
-        private string $viewFormat
+        private string $viewFormat, private View $view
     ) {}
 
     public function handle(Throwable $exception): void
@@ -62,21 +62,21 @@ class ExceptionHandler
         http_response_code($status);
 
         match ($status) {
-            404 => View::getInstance()->renderView('errors/404', [
+            404 => $this->view->renderView('errors/404', [
                 'message' => $exception->getMessage(),
             ]),
 
-            405 => View::getInstance()->renderView('errors/405', [
+            405 => $this->view->renderView('errors/405', [
                 'allowedMethods' => $exception instanceof MethodNotAllowedException
                     ? $exception->allowedMethods
                     : [],
             ]),
 
-            409 => View::getInstance()->renderView('errors/409', [
+            409 => $this->view->renderView('errors/409', [
                 'message' => $exception->getMessage(),
             ]),
 
-            default => View::getInstance()->renderView('errors/500', [
+            default => $this->view->renderView('errors/500', [
                 'message' => 'Une erreur interne est survenue sur le serveur.',
             ]),
         };

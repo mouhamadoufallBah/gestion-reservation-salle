@@ -6,10 +6,9 @@ namespace App\Service;
 
 class FlashService
 {
-    public function __construct()
-    {
-        $this->startSessionIfNeeded();
-    }
+    public function __construct(
+        private SessionManager $session
+    ) {}
 
     public function success(string $message): void
     {
@@ -33,46 +32,46 @@ class FlashService
 
     public function add(string $type, string $message): void
     {
-        $this->startSessionIfNeeded();
-        $_SESSION['flash'][$type][] = $message;
+        $messages = $this->session->get('flash', []);
+
+        $messages[$type][] = $message;
+
+        $this->session->set('flash', $messages);
     }
 
     public function get(string $type): array
     {
-        $this->startSessionIfNeeded();
-        $messages = $_SESSION['flash'][$type] ?? [];
-        unset($_SESSION['flash'][$type]);
+        $flash = $this->session->get('flash', []);
+
+        $messages = $flash[$type] ?? [];
+
+        unset($flash[$type]);
+
+        $this->session->set('flash', $flash);
 
         return $messages;
     }
 
     public function all(): array
     {
-        $this->startSessionIfNeeded();
-        $messages = $_SESSION['flash'] ?? [];
-        unset($_SESSION['flash']);
+        $messages = $this->session->get('flash', []);
+
+        $this->session->remove('flash');
 
         return $messages;
     }
 
     public function has(string $type): bool
     {
-        $this->startSessionIfNeeded();
+        $flash = $this->session->get('flash', []);
 
-        return !empty($_SESSION['flash'][$type]);
+        return !empty($flash[$type]);
     }
 
     public function hasAny(): bool
     {
-        $this->startSessionIfNeeded();
-
-        return !empty($_SESSION['flash']);
-    }
-
-    private function startSessionIfNeeded(): void
-    {
-        if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
-            session_start();
-        }
+        return !empty(
+            $this->session->get('flash', [])
+        );
     }
 }

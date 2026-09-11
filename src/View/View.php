@@ -1,41 +1,35 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\View;
+
+use App\Service\SessionManager;
 
 class View
 {
-    private static ?View $instance = null;
+    public function __construct(
+        private SessionManager $session
+    ) {}
 
-    private function __construct() {}
-
-    public static function getInstance(): View
-    {
-        if (self::$instance === null) {
-            self::$instance = new View();
-        }
-
-        return self::$instance;
-    }
-
-    public function renderView(string $view, array $data = [], string $layout = 'base'): void
-    {
+    public function renderView(
+        string $view,
+        array $data = [],
+        string $layout = 'base'
+    ): void {
         $viewPath = BASE_PATH . '/templates/' . $view . '.html.php';
 
         if (!file_exists($viewPath)) {
             http_response_code(404);
-
 
             require BASE_PATH . '/templates/errors/404.html.php';
 
             return;
         }
 
-        if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
-            session_start();
-        }
+        $flashMessages = $this->session->get('flash', []);
 
-        $flashMessages = $_SESSION['flash'] ?? [];
-        unset($_SESSION['flash']);
+        $this->session->remove('flash');
 
         $data['flashMessages'] = $data['flashMessages'] ?? $flashMessages;
 
